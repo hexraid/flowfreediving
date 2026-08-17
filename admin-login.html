@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLOW FREEDIVING Admin Login</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: #f9fafb;
+      color: #111827;
+    }
+    .login-card {
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: var(--radius-xl);
+      padding: var(--space-12);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+    }
+    .login-card__logo {
+      font-family: var(--font-display);
+      font-size: 1.25rem;
+      font-weight: var(--fw-extrabold);
+      letter-spacing: var(--ls-wider);
+      color: #111827;
+      text-transform: uppercase;
+      margin-bottom: var(--space-2);
+    }
+    .login-card__logo span { font-weight: var(--fw-light); color: #6b7280; }
+    .login-card__label {
+      font-size: var(--fs-caption);
+      color: #4b5563;
+      margin-bottom: var(--space-8);
+    }
+    .login-input {
+      width: 100%;
+      padding: 14px 18px;
+      background: #ffffff;
+      border: 1px solid #d1d5db;
+      border-radius: var(--radius-md);
+      color: #111827;
+      font-size: var(--fs-body-sm);
+      margin-bottom: var(--space-4);
+      transition: border-color 0.2s;
+    }
+    .login-input:focus { border-color: #111827; }
+    .login-input::placeholder { color: #9ca3af; }
+    .login-btn {
+      width: 100%;
+      padding: 14px;
+      background: #111827;
+      color: #ffffff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: var(--fs-body-sm);
+      font-weight: var(--fw-semibold);
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: var(--space-2);
+    }
+    .login-btn:hover { background: #1f2937; }
+    .login-error {
+      color: #ef4444;
+      font-size: var(--fs-small);
+      margin-top: var(--space-3);
+      display: none;
+    }
+    .login-back {
+      display: inline-block;
+      margin-top: var(--space-6);
+      font-size: var(--fs-caption);
+      color: #6b7280;
+      transition: color 0.2s;
+    }
+    .login-back:hover { color: #111827; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <p class="login-card__logo">FLOW <span>FREEDIVING</span></p>
+    <p class="login-card__label">관리자 로그인</p>
+    <form id="loginForm">
+      <input type="email" class="login-input" id="loginEmail" placeholder="이메일" autocomplete="email" required>
+      <input type="password" class="login-input" id="loginPw" placeholder="비밀번호" autocomplete="current-password" required>
+      <button type="submit" class="login-btn" id="loginBtn">로그인</button>
+      <p class="login-error" id="loginError"></p>
+    </form>
+    <a href="index.html" class="login-back">← 사이트로 돌아가기</a>
+  </div>
+  <script type="module">
+    import { loginWithEmail, onAdminAuthStateChanged } from './js/firebase-service.js';
+
+    const loginForm = document.getElementById('loginForm');
+    const emailInput = document.getElementById('loginEmail');
+    const pwInput = document.getElementById('loginPw');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginError = document.getElementById('loginError');
+
+    // 이미 로그인된 상태인 경우 관리자 페이지로 자동 이동
+    onAdminAuthStateChanged((user) => {
+      if (user) {
+        sessionStorage.setItem('flow_admin_auth', 'true');
+        window.location.replace('admin.html');
+      }
+    });
+
+    loginForm.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      loginError.style.display = 'none';
+      loginError.textContent = '';
+
+      const email = emailInput.value.trim();
+      const pw = pwInput.value;
+
+      if (!email || !pw) {
+        loginError.textContent = '이메일과 비밀번호를 모두 입력해주세요.';
+        loginError.style.display = 'block';
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = '로그인 중...';
+
+      try {
+        await loginWithEmail(email, pw);
+        sessionStorage.setItem('flow_admin_auth', 'true');
+        window.location.href = 'admin.html';
+      } catch (err) {
+        console.warn('Firebase Login Error:', err.code, err.message);
+        let msg = '이메일 또는 비밀번호를 확인해주세요.';
+
+        if (err.code === 'auth/invalid-email') {
+          msg = '올바른 이메일 형식을 입력해주세요.';
+        } else if (
+          err.code === 'auth/user-not-found' || 
+          err.code === 'auth/wrong-password' || 
+          err.code === 'auth/invalid-credential'
+        ) {
+          msg = '이메일 또는 비밀번호가 올바르지 않습니다.';
+        } else if (err.code === 'auth/too-many-requests') {
+          msg = '로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요.';
+        } else if (err.code === 'auth/network-request-failed') {
+          msg = '네트워크 연결 상태를 확인해주세요.';
+        } else if (err.code === 'auth/user-disabled') {
+          msg = '비활성화된 계정입니다. 관리자에게 문의해주세요.';
+        } else if (err.message && err.message.includes('초기화되지 않았습니다')) {
+          msg = err.message;
+        }
+
+        loginError.textContent = msg;
+        loginError.style.display = 'block';
+        loginBtn.disabled = false;
+        loginBtn.textContent = '로그인';
+      }
+    });
+  </script>
+</body>
+</html>
