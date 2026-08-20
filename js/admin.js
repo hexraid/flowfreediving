@@ -9,7 +9,9 @@ let isInitialized = false;
 
 // ─── Firebase Auth Guard ───
 onAdminAuthStateChanged((user) => {
-  if (!user) {
+  const hasSession = sessionStorage.getItem('flow_admin_auth') === 'true';
+
+  if (!user || !hasSession) {
     sessionStorage.removeItem('flow_admin_auth');
     window.location.replace('admin-login.html');
   } else {
@@ -72,6 +74,8 @@ async function init() {
       footer: await DataService.getFooter(),
       links: await DataService.getLinks(),
       seo: await DataService.getSEO(),
+      courseFinder: await DataService.getCourseFinder(),
+      galleryCategories: await DataService.getGalleryCategories(),
       popup: await DataService.getPopup()
     };
 
@@ -307,7 +311,7 @@ function renderPanel(name) {
     dashboard: '대시보드', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
     programs: '교육과정 관리', instructors: '강사 관리', reviews: '후기 관리',
     gallery: '갤러리 관리', popup: '팝업 관리', faq: 'FAQ 관리', footer: 'Footer 관리',
-    links: '연동 서비스', seo: 'SEO 설정'
+    links: '연동 서비스', seo: '설정', settings: '설정'
   };
   const subtitles = {
     dashboard: '사이트 운영 현황과 연동 서비스 상태를 한눈에 확인하세요.',
@@ -321,7 +325,8 @@ function renderPanel(name) {
     faq: '고객들이 자주 묻는 질문(FAQ)의 답변 리스트를 구축합니다.',
     footer: '회사 소개 글귀, 하단 사업자 정보 및 공식 SNS 링크 채널을 변경합니다.',
     links: '메인 페이지 예약 버튼 및 상담 채널과 연동될 타사 API 링크를 지정합니다.',
-    seo: '검색 엔진 노출을 위한 페이지 메타 데이터와 공유용 OpenGraph를 설정합니다.'
+    seo: '사이트 전체 기본 설정 및 검색엔진(SEO) 메타 데이터를 통합 관리합니다.',
+    settings: '사이트 전체 기본 설정 및 검색엔진(SEO) 메타 데이터를 통합 관리합니다.'
   };
 
   document.getElementById('panelTitle').textContent = titles[name] || '';
@@ -1629,9 +1634,9 @@ function loadInstructors() {
             <th style="width: 60px; min-width: 60px; text-align: center; white-space: nowrap;">순서</th>
             <th style="width: 70px; min-width: 70px; text-align: center;">사진</th>
             <th style="width: 15%; min-width: 110px;">강사명</th>
+            <th style="width: 110px; min-width: 110px; text-align: center; white-space: nowrap;">공개 여부</th>
             <th style="width: 22%; min-width: 140px;">역할/소속</th>
             <th>교육 철학</th>
-            <th style="width: 95px; min-width: 95px; text-align: center; white-space: nowrap;">메인 노출</th>
           </tr>
         </thead>
         <tbody>
@@ -1642,7 +1647,8 @@ function loadInstructors() {
   } else {
     pagedInstructors.forEach((inst, i) => {
       const actualIndex = startIndex + i;
-      const isMainShow = inst.mainShow !== false;
+      const isVisible = inst.visible !== false;
+      const visText = isVisible ? '공개' : '비공개';
 
       // Table row (행 전체 클릭 시 상세 편집 이동)
       html += `
@@ -1657,17 +1663,20 @@ function loadInstructors() {
           <td data-label="강사명">
             <div style="font-weight: 700; color: var(--admin-text-primary); font-size: 13.5px;">${inst.name}</div>
           </td>
+          <td data-label="공개 여부" style="text-align: center;" onclick="event.stopPropagation()">
+            <div style="display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+              <label class="toggle" style="margin: 0;">
+                <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleInstructorVisible(${actualIndex}, this.checked, event)">
+                <span class="toggle__slider"></span>
+              </label>
+              <span style="font-weight: 600; font-size: 12.5px; color: ${isVisible ? 'var(--admin-primary)' : '#EF4444'};">${visText}</span>
+            </div>
+          </td>
           <td data-label="역할/소속" style="font-size: 12.5px; color: var(--admin-text-secondary);">
             ${inst.role || ''}
           </td>
           <td data-label="교육 철학" style="max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12.5px; color: var(--admin-text-secondary);">
             ${inst.philosophy ? `"${inst.philosophy}"` : '-'}
-          </td>
-          <td data-label="메인 노출" style="text-align: center;" onclick="event.stopPropagation()">
-            <label class="toggle" style="margin: 0;">
-              <input type="checkbox" ${isMainShow ? 'checked' : ''} onchange="toggleInstructorMainShow(${actualIndex}, this.checked, event)">
-              <span class="toggle__slider"></span>
-            </label>
           </td>
         </tr>
       `;
@@ -1774,15 +1783,16 @@ window.applyInstructorsOrder = async function () {
   loadInstructors();
 };
 
-window.toggleInstructorMainShow = async function (idx, mainShow, e) {
+window.toggleInstructorVisible = async function (idx, visible, e) {
   if (e) e.stopPropagation();
-  adminData.instructors[idx].mainShow = mainShow;
-  adminData.instructors[idx].visible = true; // Always true in CMS
+  adminData.instructors[idx].visible = visible;
   await DataService.updateInstructors(adminData.instructors);
-  writeAdminLog(`강사 "${adminData.instructors[idx].name}" 메인 노출 ${mainShow ? 'ON' : 'OFF'} 설정`);
-  showToast(mainShow ? '메인에 노출됩니다.' : '메인 노출이 해제되었습니다.');
+  writeAdminLog(`강사 "${adminData.instructors[idx].name}" ${visible ? '공개' : '비공개'} 설정`);
+  showToast(visible ? '공개로 설정되었습니다.' : '비공개로 설정되었습니다.');
   loadInstructors();
 };
+
+window.toggleInstructorMainShow = window.toggleInstructorVisible;
 
 function renderInstructorsPagination(totalPages, currentPage) {
   const maxVisiblePages = 5;
@@ -1985,27 +1995,30 @@ window.changeReviewsPage = function (newPage) {
   loadReviews();
 };
 
-// ─── Gallery Panel ───
+// ─── Gallery Panel Multi-Selection & Batch Actions ───
 let currentGalleryFilter = 'all';
-let currentGalleryViewMode = 'list';
+let currentGalleryViewMode = 'grid'; // Default & Permanent: Thumbnail Grid View
 let currentGalleryPage = 1;
 const GALLERY_PAGE_SIZE = 20;
 let tempGalleryOrder = null;
+const selectedGalleryIndexes = new Set();
 
 function getGalleryCategoryName(cat) {
+  if (!cat) return '기타';
+  const categories = (adminData && Array.isArray(adminData.galleryCategories)) ? adminData.galleryCategories : [];
+  const found = categories.find(c => c.id === cat || c.name === cat);
+  if (found) return found.name;
   if (cat === 'freediving') return '프리다이빙';
-  if (cat === 'swimming' || cat === 'eggyeong') return '수영';
-  return '기타';
+  if (cat === 'course') return '강습';
+  if (cat === 'swimming' || cat === 'eggyeong') return '입영';
+  if (cat === 'etc') return '기타';
+  return cat;
 }
 
 window.changeGalleryFilter = function (cat) {
+  selectedGalleryIndexes.clear(); // 필터 변경 시 선택 상태 초기화
   currentGalleryFilter = cat;
   currentGalleryPage = 1;
-  loadGallery();
-};
-
-window.changeGalleryViewMode = function (mode) {
-  currentGalleryViewMode = mode;
   loadGallery();
 };
 
@@ -2014,10 +2027,7 @@ window.changeGalleryPage = function (newPage) {
   const filtered = allGallery.filter(item => {
     if (currentGalleryFilter === 'all') return true;
     const cat = item.category || 'freediving';
-    const normalizedCat = (cat === 'freediving') ? 'freediving'
-                        : (cat === 'swimming' || cat === 'eggyeong') ? 'swimming'
-                        : 'etc';
-    return normalizedCat === currentGalleryFilter;
+    return cat === currentGalleryFilter || DataService.normalizeCategory(cat) === currentGalleryFilter;
   });
   const totalPages = Math.ceil(filtered.length / GALLERY_PAGE_SIZE) || 1;
   if (newPage < 1 || newPage > totalPages) return;
@@ -2025,32 +2035,242 @@ window.changeGalleryPage = function (newPage) {
   loadGallery();
 };
 
-function updateGalleryControlUI() {
-  // Update Filter Tab styles
-  const filterBtns = document.querySelectorAll('.gallery-cat-filter-btn');
-  filterBtns.forEach(btn => {
-    const isAct = btn.getAttribute('data-cat') === currentGalleryFilter;
-    btn.style.background = isAct ? '#ffffff' : 'transparent';
-    btn.style.color = isAct ? 'var(--admin-text-primary)' : 'var(--admin-text-secondary)';
-    btn.style.fontWeight = isAct ? '600' : '500';
-    btn.style.boxShadow = isAct ? '0 1px 2px rgba(0,0,0,0.05)' : 'none';
-  });
-
-  // Update View Mode styles
-  const listBtn = document.getElementById('galViewListBtn');
-  const gridBtn = document.getElementById('galViewGridBtn');
-  if (listBtn && gridBtn) {
-    const isList = currentGalleryViewMode === 'list';
-    listBtn.style.background = isList ? '#ffffff' : 'transparent';
-    listBtn.style.color = isList ? 'var(--admin-text-primary)' : 'var(--admin-text-secondary)';
-    listBtn.style.fontWeight = isList ? '600' : '500';
-    listBtn.style.boxShadow = isList ? '0 1px 2px rgba(0,0,0,0.05)' : 'none';
-
-    gridBtn.style.background = !isList ? '#ffffff' : 'transparent';
-    gridBtn.style.color = !isList ? 'var(--admin-text-primary)' : 'var(--admin-text-secondary)';
-    gridBtn.style.fontWeight = !isList ? '600' : '500';
-    gridBtn.style.boxShadow = !isList ? '0 1px 2px rgba(0,0,0,0.05)' : 'none';
+// 개별 미디어 선택 / 선택 해제
+window.toggleGalleryItemSelection = function (index, isChecked) {
+  if (isChecked) {
+    selectedGalleryIndexes.add(index);
+  } else {
+    selectedGalleryIndexes.delete(index);
   }
+  updateGalleryBatchActionBar();
+  
+  const cardEl = document.getElementById(`galCard_${index}`);
+  if (cardEl) {
+    if (isChecked) {
+      cardEl.classList.add('is-selected');
+    } else {
+      cardEl.classList.remove('is-selected');
+    }
+  }
+};
+
+// 현재 필터 결과 미디어 전체 선택
+window.selectAllGalleryItems = function () {
+  const allGallery = (adminData && Array.isArray(adminData.gallery)) ? adminData.gallery : [];
+  allGallery.forEach((item, idx) => {
+    let isMatch = false;
+    if (currentGalleryFilter === 'all') {
+      isMatch = true;
+    } else {
+      const cat = item.category || 'freediving';
+      isMatch = (cat === currentGalleryFilter || DataService.normalizeCategory(cat) === currentGalleryFilter);
+    }
+    if (isMatch) {
+      selectedGalleryIndexes.add(idx);
+    }
+  });
+  loadGallery();
+};
+
+// 모든 선택 해제
+window.deselectAllGalleryItems = function () {
+  selectedGalleryIndexes.clear();
+  loadGallery();
+};
+
+// 카테고리 일괄 변경 드롭다운 옵션 바인딩
+function populateGalleryBatchCatSelect(force = false) {
+  const selectEl = document.getElementById('galleryBatchCatSelect');
+  if (!selectEl) return;
+
+  const categories = (adminData && Array.isArray(adminData.galleryCategories)) ? adminData.galleryCategories : [];
+  
+  // 이미 옵션이 들어있고 force가 false면 기존 선택값을 유지
+  if (!force && selectEl.options.length > 1) {
+    return;
+  }
+
+  const currentVal = selectEl.value;
+  let html = `<option value="">카테고리 선택</option>`;
+  html += categories.map(cat => {
+    const id = typeof cat === 'object' ? (cat.id || cat.name) : cat;
+    const name = typeof cat === 'object' ? (cat.name || cat.id) : cat;
+    return `<option value="${id}">${name}</option>`;
+  }).join('');
+
+  selectEl.innerHTML = html;
+  if (currentVal && selectEl.querySelector(`option[value="${currentVal}"]`)) {
+    selectEl.value = currentVal;
+  }
+}
+
+// 일괄 작업 바 UI 및 카테고리 옵션 갱신
+function updateGalleryBatchActionBar() {
+  const bar = document.getElementById('galleryBatchActionBar');
+  const countBadge = document.getElementById('gallerySelectedCountBadge');
+
+  if (!bar) return;
+
+  const count = selectedGalleryIndexes.size;
+  if (count > 0) {
+    bar.style.display = 'flex';
+    if (countBadge) countBadge.textContent = `${count}개 선택됨`;
+  } else {
+    bar.style.display = 'none';
+  }
+
+  populateGalleryBatchCatSelect();
+}
+
+// Reusable Admin Confirmation Modal Helper
+// 전역 콜백 + event delegation 패턴으로 이벤트 누적/유실 방지
+let _confirmOnConfirm = null;
+
+function initConfirmModal() {
+  const overlay = document.getElementById('confirmModalOverlay');
+  if (!overlay || overlay.dataset.bound === 'true') return;
+  overlay.dataset.bound = 'true';
+
+  overlay.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target.id === 'confirmModalCancel' || target.id === 'confirmModalClose') {
+      overlay.classList.remove('is-active');
+      _confirmOnConfirm = null;
+    }
+    if (target.id === 'confirmModalOk') {
+      overlay.classList.remove('is-active');
+      if (_confirmOnConfirm) {
+        const fn = _confirmOnConfirm;
+        _confirmOnConfirm = null;
+        fn();
+      }
+    }
+  });
+}
+
+window.showAdminConfirmModal = function ({ title, cancelText = '취소', confirmText = '변경하기', onConfirm }) {
+  const overlay = document.getElementById('confirmModalOverlay');
+  const titleEl = document.getElementById('confirmModalTitle');
+  const cancelBtn = document.getElementById('confirmModalCancel');
+  const okBtn = document.getElementById('confirmModalOk');
+
+  if (!overlay || !titleEl || !okBtn) {
+    console.log('[Confirm Modal] DOM not found, falling back to window.confirm');
+    if (window.confirm(title)) {
+      if (onConfirm) onConfirm();
+    }
+    return;
+  }
+
+  initConfirmModal();
+
+  titleEl.textContent = title;
+  if (cancelBtn) cancelBtn.textContent = cancelText;
+  okBtn.textContent = confirmText;
+
+  _confirmOnConfirm = onConfirm;
+  overlay.classList.add('is-active');
+};
+
+// 카테고리 일괄 변경
+window.batchChangeGalleryCategory = async function () {
+  console.log('[Gallery Bulk] category change button clicked');
+  const count = selectedGalleryIndexes.size;
+  console.log('[Gallery Bulk] selected count:', count);
+
+  if (count === 0) {
+    showToast('변경할 미디어를 선택해주세요.');
+    return;
+  }
+
+  const selectEl = document.getElementById('galleryBatchCatSelect');
+  const targetCatId = selectEl?.value;
+  console.log('[Gallery Bulk] target category id:', targetCatId);
+
+  if (!targetCatId) {
+    showToast('변경할 카테고리를 선택해주세요.');
+    return;
+  }
+
+  const targetCatName = getGalleryCategoryName(targetCatId);
+  const promptText = `선택한 ${count}개의 미디어를 '${targetCatName}' 카테고리로 변경할까요?`;
+  console.log('[Gallery Bulk] showing confirm:', promptText);
+
+  showAdminConfirmModal({
+    title: promptText,
+    cancelText: '취소',
+    confirmText: '변경하기',
+    onConfirm: async () => {
+      try {
+        const allGallery = adminData.gallery || [];
+        selectedGalleryIndexes.forEach(idx => {
+          if (allGallery[idx]) {
+            allGallery[idx].category = targetCatId;
+          }
+        });
+
+        await DataService.updateGallery(allGallery);
+        writeAdminLog(`갤러리 미디어 ${count}개 카테고리 일괄 변경 (${targetCatName})`);
+        showToast(`${count}개의 미디어 카테고리를 '${targetCatName}'으로 변경했습니다.`);
+        selectedGalleryIndexes.clear();
+        if (selectEl) selectEl.value = '';
+        populateGalleryBatchCatSelect(true);
+        loadGallery();
+      } catch (err) {
+        console.error("Batch category change error:", err);
+        showToast("카테고리 변경에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+  });
+};
+
+// 공개 / 비공개 일괄 변경
+window.batchChangeGalleryVisibility = async function (visible) {
+  const count = selectedGalleryIndexes.size;
+  if (count === 0) {
+    showToast('변경할 미디어를 선택해주세요.');
+    return;
+  }
+
+  const label = visible ? '공개' : '비공개';
+  const promptText = `선택한 ${count}개의 미디어를 ${label} 상태로 변경할까요?`;
+
+  showAdminConfirmModal({
+    title: promptText,
+    cancelText: '취소',
+    confirmText: '변경하기',
+    onConfirm: async () => {
+      try {
+        const allGallery = adminData.gallery || [];
+        selectedGalleryIndexes.forEach(idx => {
+          if (allGallery[idx]) {
+            allGallery[idx].visible = visible;
+          }
+        });
+
+        await DataService.updateGallery(allGallery);
+        writeAdminLog(`갤러리 미디어 ${count}개 공개 상태 일괄 변경 (${label})`);
+        showToast(`${count}개의 미디어를 ${label} 상태로 변경했습니다.`);
+        selectedGalleryIndexes.clear();
+        loadGallery();
+      } catch (err) {
+        console.error("Batch visibility change error:", err);
+        showToast("일부 미디어 변경에 실패했습니다. 다시 시도해주세요.");
+      }
+    }
+  });
+};
+
+function updateGalleryControlUI() {
+  const filterGroup = document.getElementById('galleryCategoryFilterGroup');
+  if (filterGroup && adminData && Array.isArray(adminData.galleryCategories)) {
+    const categories = [{ id: 'all', name: '전체' }, ...adminData.galleryCategories];
+    filterGroup.innerHTML = categories.map(cat => {
+      const isAct = cat.id === currentGalleryFilter;
+      return `<button type="button" class="gallery-cat-filter-btn" data-cat="${cat.id}" onclick="changeGalleryFilter('${cat.id}')" style="border: none; background: ${isAct ? '#ffffff' : 'transparent'}; color: ${isAct ? 'var(--admin-text-primary)' : 'var(--admin-text-secondary)'}; font-size: 12px; font-weight: ${isAct ? '600' : '500'}; padding: 5px 12px; border-radius: 6px; cursor: pointer; box-shadow: ${isAct ? '0 1px 2px rgba(0,0,0,0.05)' : 'none'}; transition: all 0.15s;">${cat.name}</button>`;
+    }).join('');
+  }
+  updateGalleryBatchActionBar();
 }
 
 function loadGallery() {
@@ -2075,10 +2295,7 @@ function loadGallery() {
   const filtered = allGallery.map((item, originalIndex) => ({ ...item, originalIndex })).filter(item => {
     if (currentGalleryFilter === 'all') return true;
     const cat = item.category || 'freediving';
-    const normalizedCat = (cat === 'freediving') ? 'freediving'
-                        : (cat === 'swimming' || cat === 'eggyeong') ? 'swimming'
-                        : 'etc';
-    return normalizedCat === currentGalleryFilter;
+    return cat === currentGalleryFilter || DataService.normalizeCategory(cat) === currentGalleryFilter;
   });
 
   const totalFiltered = filtered.length;
@@ -2093,105 +2310,63 @@ function loadGallery() {
 
   let html = '';
 
-  if (currentGalleryViewMode === 'list') {
-    // ─── 목록 보기 (Table View) ───
+  // ─── 썸네일 보기 전용 (Thumbnail Grid View Only) ───
+  if (totalFiltered === 0) {
     html += `
-      <div class="admin-table-container">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              ${isFilterAll ? '<th style="width: 32px; text-align: center;"></th>' : ''}
-              <th style="width: 72px; text-align: center;">미리보기</th>
-              <th>설명</th>
-              <th style="width: 100px; text-align: center;">종류</th>
-              <th style="width: 120px; text-align: center;">카테고리</th>
-              <th style="width: 90px; text-align: center;">노출 상태</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div style="text-align:center; color:var(--admin-text-secondary); padding:var(--space-8) 0;">
+        해당 카테고리에 등록된 미디어가 없습니다.
+      </div>
     `;
-
-    if (totalFiltered === 0) {
-      html += `<tr><td colspan="${isFilterAll ? 6 : 5}" style="text-align:center;color:var(--admin-text-secondary);padding:var(--space-8) 0;">해당 카테고리에 등록된 미디어가 없습니다.</td></tr>`;
-    } else {
-      html += pagedItems.map(g => {
-        const isVisible = g.visible !== false;
-        const catName = getGalleryCategoryName(g.category);
-        const isVideo = g.mediaType === 'video';
-        return `
-          <tr class="clickable-row ${isFilterAll ? 'draggable-row' : ''}" ${isFilterAll ? `draggable="true" data-index="${g.originalIndex}"` : ''} onclick="showEditForm('gallery', ${g.originalIndex})">
-            ${isFilterAll ? '<td style="text-align:center; color: var(--admin-text-tertiary); cursor: grab;" title="드래그하여 순서 변경" onclick="event.stopPropagation()">⋮⋮</td>' : ''}
-            <td data-label="미리보기" style="text-align: center; vertical-align: middle;">
-              <div style="position: relative; width: 48px; height: 48px; margin: 0 auto; border-radius: var(--radius-sm); overflow: hidden; background: #0c1a2e;">
-                <img src="${g.src || (isVideo ? (g.thumbnailUrl || g.videoUrl) : 'images/gallery-1.jpg')}" class="prog-image-preview" alt="${g.alt || '갤러리 썸네일'}" style="pointer-events: none; -webkit-user-drag: none; width: 100%; height: 100%; object-fit: cover;">
-                ${isVideo ? `<span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.8); color: #fff; font-size: 8px; padding: 1px 3px; border-radius: 2px; line-height: 1;">▶</span>` : ''}
-              </div>
-            </td>
-            <td data-label="설명" style="vertical-align: middle;">
-              <div style="font-weight: 600; color: var(--admin-text-primary); font-size: 13px; line-height: 1.4;">${g.alt || '(설명 없음)'}</div>
-            </td>
-            <td data-label="종류" style="text-align: center; vertical-align: middle;">
-              <span class="badge ${isVideo ? 'badge--primary' : 'badge--neutral'}" style="font-size: 11px; ${isVideo ? 'background:#EFF6FF; color:#2563EB;' : ''}">${isVideo ? '영상' : '사진'}</span>
-            </td>
-            <td data-label="카테고리" style="text-align: center; vertical-align: middle;">
-              <span class="badge badge--info">${catName}</span>
-            </td>
-            <td data-label="노출 상태" style="text-align: center; vertical-align: middle;">
-              <span class="badge ${isVisible ? 'badge--success' : 'badge--neutral'}" style="font-size: 11px;">${isVisible ? '노출' : '숨김'}</span>
-            </td>
-          </tr>
-        `;
-      }).join('');
-    }
-
-    html += `</tbody></table></div>`;
   } else {
-    // ─── 썸네일 보기 (Thumbnail Grid View) ───
-    if (totalFiltered === 0) {
-      html += `
-        <div style="text-align:center; color:var(--admin-text-secondary); padding:var(--space-8) 0;">
-          해당 카테고리에 등록된 미디어가 없습니다.
-        </div>
-      `;
-    } else {
-      html += `
-        <div class="gallery-admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; padding: 16px;">
-      `;
-      html += pagedItems.map(g => {
-        const isVisible = g.visible !== false;
-        const catName = getGalleryCategoryName(g.category);
-        const isVideo = g.mediaType === 'video';
-        return `
-          <div class="gallery-thumbnail-card ${isFilterAll ? 'draggable-gallery-card' : ''}" ${isFilterAll ? `draggable="true" data-index="${g.originalIndex}"` : ''} onclick="showEditForm('gallery', ${g.originalIndex})" style="background: #ffffff; border: 1px solid var(--admin-border); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column;" onmouseenter="this.style.borderColor='var(--admin-primary)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseleave="this.style.borderColor='var(--admin-border)'; this.style.transform='none'; this.style.boxShadow='none';">
-            <div style="width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #0c1a2e; position: relative;">
-              <img src="${g.src || (isVideo ? (g.thumbnailUrl || g.videoUrl) : 'images/gallery-1.jpg')}" alt="${g.alt || ''}" style="pointer-events: none; -webkit-user-drag: none; width: 100%; height: 100%; object-fit: cover;">
-              <span class="badge ${isVisible ? 'badge--success' : 'badge--neutral'}" style="position: absolute; top: 8px; right: 8px; font-size: 10.5px; padding: 2px 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
-                ${isVisible ? '노출' : '숨김'}
-              </span>
-              ${isVideo ? `
-                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.75); color: #ffffff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px;">
-                  <span>▶</span> 영상
-                </div>
-              ` : `
-                <div style="position: absolute; top: 8px; left: 8px; background: rgba(0,0,0,0.55); color: #ffffff; font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px;">
-                  사진
-                </div>
-              `}
+    html += `
+      <div class="gallery-admin-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; padding: 16px;">
+    `;
+    html += pagedItems.map(g => {
+      const isVisible = g.visible !== false;
+      const catName = getGalleryCategoryName(g.category);
+      const isVideo = g.mediaType === 'video';
+      const isSelected = selectedGalleryIndexes.has(g.originalIndex);
+
+      return `
+        <div id="galCard_${g.originalIndex}" class="gallery-thumbnail-card ${isSelected ? 'is-selected' : ''} ${isFilterAll ? 'draggable-gallery-card' : ''}" ${isFilterAll ? `draggable="true" data-index="${g.originalIndex}"` : ''} onclick="showEditForm('gallery', ${g.originalIndex})" style="background: #ffffff; border: 1px solid var(--admin-border); border-radius: var(--radius-md); overflow: hidden; cursor: pointer; transition: all 0.2s ease; display: flex; flex-direction: column; position: relative;" onmouseenter="if (!this.classList.contains('is-selected')) { this.style.borderColor='var(--admin-primary)'; } this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.08)';" onmouseleave="if (!this.classList.contains('is-selected')) { this.style.borderColor='var(--admin-border)'; } this.style.transform='none'; this.style.boxShadow='none';">
+          <div style="width: 100%; aspect-ratio: 4/3; overflow: hidden; background: #0c1a2e; position: relative;">
+            
+            <!-- 다중 선택 체크박스 (좌측 상단) -->
+            <label class="gal-select-checkbox-wrap" onmousedown="event.stopPropagation()" onclick="event.stopPropagation()">
+              <input type="checkbox" class="gal-card-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleGalleryItemSelection(${g.originalIndex}, this.checked)">
+              <span class="gal-card-custom-check"></span>
+            </label>
+
+            <img src="${g.src || (isVideo ? (g.thumbnailUrl || g.videoUrl) : 'images/gallery-1.jpg')}" alt="${g.alt || ''}" style="pointer-events: none; -webkit-user-drag: none; width: 100%; height: 100%; object-fit: cover;">
+            
+            <!-- 노출 상태 뱃지 (우측 상단) -->
+            <span class="badge ${isVisible ? 'badge--success' : 'badge--neutral'}" style="position: absolute; top: 8px; right: 8px; font-size: 10.5px; padding: 2px 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);">
+              ${isVisible ? '노출' : '숨김'}
+            </span>
+
+            ${isVideo ? `
+              <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.75); color: #ffffff; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 3px;">
+                <span>▶</span> 영상
+              </div>
+            ` : `
+              <div style="position: absolute; bottom: 8px; left: 8px; background: rgba(0,0,0,0.55); color: #ffffff; font-size: 10px; font-weight: 500; padding: 2px 6px; border-radius: 4px;">
+                사진
+              </div>
+            `}
+          </div>
+          <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; justify-content: space-between;">
+            <div style="font-weight: 600; font-size: 13px; color: var(--admin-text-primary); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 35px;" title="${g.alt || ''}">
+              ${g.alt || '(설명 없음)'}
             </div>
-            <div style="padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; flex: 1; justify-content: space-between;">
-              <div style="font-weight: 600; font-size: 13px; color: var(--admin-text-primary); line-height: 1.35; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; min-height: 35px;" title="${g.alt || ''}">
-                ${g.alt || '(설명 없음)'}
-              </div>
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 6px; border-top: 1px solid #F1F5F9;">
-                <span class="badge badge--info" style="font-size: 10.5px;">${catName}</span>
-                <span class="badge ${isVideo ? 'badge--primary' : 'badge--neutral'}" style="font-size: 10.5px; ${isVideo ? 'background:#EFF6FF; color:#2563EB;' : ''}">${isVideo ? '영상' : '사진'}</span>
-              </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding-top: 6px; border-top: 1px solid #F1F5F9;">
+              <span class="badge badge--info" style="font-size: 10.5px;">${catName}</span>
+              <span class="badge ${isVideo ? 'badge--primary' : 'badge--neutral'}" style="font-size: 10.5px; ${isVideo ? 'background:#EFF6FF; color:#2563EB;' : ''}">${isVideo ? '영상' : '사진'}</span>
             </div>
           </div>
-        `;
-      }).join('');
-      html += `</div>`;
-    }
+        </div>
+      `;
+    }).join('');
+    html += `</div>`;
   }
 
   // 3. 페이지네이션 (20개 초과, 2페이지 이상일 때만 표시)
@@ -2210,63 +2385,27 @@ function initGalleryDragAndDrop() {
   const container = document.getElementById('galleryList');
   if (!container) return;
 
-  if (currentGalleryViewMode === 'list') {
-    const tbody = container.querySelector('tbody');
-    if (!tbody) return;
-    const rows = tbody.querySelectorAll('.draggable-row');
-    rows.forEach(row => {
-      row.addEventListener('dragstart', (e) => {
-        row.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      row.addEventListener('dragend', () => {
-        row.classList.remove('dragging');
-        rows.forEach(r => r.classList.remove('drag-over'));
-        checkGalleryOrderChanged();
-      });
-      row.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        row.classList.add('drag-over');
-      });
-      row.addEventListener('dragleave', () => {
-        row.classList.remove('drag-over');
-      });
+  const grid = container.querySelector('.gallery-admin-grid');
+  if (!grid) return;
+  const cards = grid.querySelectorAll('.draggable-gallery-card');
+  cards.forEach(card => {
+    card.addEventListener('dragstart', (e) => {
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
     });
-
-    tbody.addEventListener('dragover', (e) => {
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      cards.forEach(c => c.classList.remove('drag-over'));
+      checkGalleryOrderChanged();
+    });
+    card.addEventListener('dragover', (e) => {
       e.preventDefault();
-      const draggingRow = tbody.querySelector('.dragging');
-      if (!draggingRow) return;
-      const afterElement = getDragAfterElement(tbody, e.clientY);
-      if (afterElement == null) {
-        tbody.appendChild(draggingRow);
-      } else {
-        tbody.insertBefore(draggingRow, afterElement);
-      }
+      card.classList.add('drag-over');
     });
-  } else {
-    // Grid View Drag & Drop
-    const grid = container.querySelector('.gallery-admin-grid');
-    if (!grid) return;
-    const cards = grid.querySelectorAll('.draggable-gallery-card');
-    cards.forEach(card => {
-      card.addEventListener('dragstart', (e) => {
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-      });
-      card.addEventListener('dragend', () => {
-        card.classList.remove('dragging');
-        cards.forEach(c => c.classList.remove('drag-over'));
-        checkGalleryOrderChanged();
-      });
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        card.classList.add('drag-over');
-      });
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('drag-over');
-      });
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over');
     });
+  });
 
     grid.addEventListener('dragover', (e) => {
       e.preventDefault();
@@ -2283,7 +2422,6 @@ function initGalleryDragAndDrop() {
         grid.insertBefore(draggingCard, afterCard);
       }
     });
-  }
 }
 
 function checkGalleryOrderChanged() {
@@ -2653,24 +2791,537 @@ window.saveLinks = async function () {
   showToast();
 };
 
-// ═══════ SEO ═══════
+// ═══════ Settings (설정 — 기본 설정 & SEO 설정) ═══════
+window.switchSettingsTab = function(tabName) {
+  const isBasic = tabName === 'basic';
+  const btnBasic = document.getElementById('tabBtnBasic');
+  const btnSeo = document.getElementById('tabBtnSeo');
+  const contentBasic = document.getElementById('tabContentBasic');
+  const contentSeo = document.getElementById('tabContentSeo');
+
+  if (btnBasic && btnSeo && contentBasic && contentSeo) {
+    btnBasic.classList.toggle('is-active', isBasic);
+    btnBasic.style.borderBottomColor = isBasic ? 'var(--admin-primary)' : 'transparent';
+    btnBasic.style.color = isBasic ? 'var(--admin-primary)' : 'var(--admin-text-secondary)';
+    btnBasic.style.fontWeight = isBasic ? '700' : '600';
+
+    btnSeo.classList.toggle('is-active', !isBasic);
+    btnSeo.style.borderBottomColor = !isBasic ? 'var(--admin-primary)' : 'transparent';
+    btnSeo.style.color = !isBasic ? 'var(--admin-primary)' : 'var(--admin-text-secondary)';
+    btnSeo.style.fontWeight = !isBasic ? '700' : '600';
+
+    contentBasic.style.display = isBasic ? 'block' : 'none';
+    contentSeo.style.display = !isBasic ? 'block' : 'none';
+  }
+};
+
+// ─── 갤러리 카테고리 관리 (Simple Card Drag & Drop Layout) ───
+let draggedCategoryIndex = null;
+let isCategoryDragAllowed = false;
+
+window.enableCategoryCardDrag = function(handleEl) {
+  isCategoryDragAllowed = true;
+  const row = handleEl.closest('.category-card-row');
+  if (row) row.setAttribute('draggable', 'true');
+};
+
+window.disableCategoryCardDrag = function(handleEl) {
+  isCategoryDragAllowed = false;
+  const row = handleEl.closest('.category-card-row');
+  if (row) row.setAttribute('draggable', 'false');
+};
+
+window.renderGalleryCategoryManager = function() {
+  const container = document.getElementById('galleryCategoryManagerContainer');
+  if (!container) return;
+
+  const categories = adminData.galleryCategories || [
+    { id: 'freediving', name: '프리다이빙' },
+    { id: 'course', name: '강습' },
+    { id: 'etc', name: '기타' }
+  ];
+
+  container.innerHTML = categories.map((cat, index) => `
+    <div class="category-card-row"
+      data-index="${index}"
+      draggable="false"
+      ondragstart="handleCategoryDragStart(event, ${index})"
+      ondragover="handleCategoryDragOver(event, ${index})"
+      ondragleave="handleCategoryDragLeave(event)"
+      ondrop="handleCategoryDrop(event, ${index})"
+      ondragend="handleCategoryDragEnd(event)"
+      style="padding: 10px 14px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; gap: 10px; transition: all 0.15s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+      
+      <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0;">
+        <span class="drag-handle"
+          onmousedown="enableCategoryCardDrag(this)"
+          onmouseup="disableCategoryCardDrag(this)"
+          onmouseleave="disableCategoryCardDrag(this)"
+          title="드래그하여 순서 변경">⋮⋮</span>
+        <input type="text" class="form-input" id="galCatName_${index}" value="${cat.name || ''}"
+          onmousedown="event.stopPropagation()"
+          onfocus="disableCategoryCardDrag(this)"
+          placeholder="카테고리 이름" style="flex: 1; max-width: 210px; height: 36px; font-size: 13.5px; font-weight: 600; color: var(--admin-text-primary); border: 1px solid var(--admin-border); border-radius: 5px;">
+        <input type="hidden" id="galCatId_${index}" value="${cat.id || ''}">
+      </div>
+
+      <button type="button" class="admin-btn admin-btn--danger-ghost" onclick="deleteGalleryCategory(${index})" style="padding: 4px 10px; font-size: 12px; white-space: nowrap; height: 32px;">
+        삭제
+      </button>
+    </div>
+  `).join('');
+};
+
+window.handleCategoryDragStart = function(e, index) {
+  if (!isCategoryDragAllowed) {
+    e.preventDefault();
+    return false;
+  }
+  draggedCategoryIndex = index;
+  const row = e.currentTarget;
+  if (row) {
+    row.classList.add('is-dragging');
+  }
+  e.dataTransfer.effectAllowed = 'move';
+};
+
+window.handleCategoryDragOver = function(e, index) {
+  e.preventDefault();
+  if (draggedCategoryIndex === null || draggedCategoryIndex === index) return;
+  e.dataTransfer.dropEffect = 'move';
+
+  const row = e.currentTarget;
+  const rect = row.getBoundingClientRect();
+  const offsetY = e.clientY - rect.top;
+  const isTopHalf = offsetY < rect.height / 2;
+
+  row.classList.remove('drop-above', 'drop-below');
+  if (isTopHalf) {
+    row.classList.add('drop-above');
+    row.dataset.dropPos = 'above';
+  } else {
+    row.classList.add('drop-below');
+    row.dataset.dropPos = 'below';
+  }
+};
+
+window.handleCategoryDragLeave = function(e) {
+  const row = e.currentTarget;
+  if (row) {
+    row.classList.remove('drop-above', 'drop-below');
+  }
+};
+
+window.handleCategoryDrop = function(e, targetIndex) {
+  e.preventDefault();
+  const row = e.currentTarget;
+  const dropPos = row?.dataset?.dropPos || 'below';
+
+  document.querySelectorAll('.category-card-row').forEach(r => {
+    r.classList.remove('drop-above', 'drop-below', 'is-dragging');
+  });
+
+  if (draggedCategoryIndex === null) return;
+
+  const cats = adminData.galleryCategories || [];
+  if (!cats.length) return;
+
+  // Save current input values before reordering
+  for (let i = 0; i < cats.length; i++) {
+    const nameVal = document.getElementById(`galCatName_${i}`)?.value.trim();
+    if (nameVal) cats[i].name = nameVal;
+  }
+
+  const [movedItem] = cats.splice(draggedCategoryIndex, 1);
+
+  let insertIndex = targetIndex;
+  if (dropPos === 'below') {
+    insertIndex = targetIndex + (draggedCategoryIndex < targetIndex ? 0 : 1);
+  } else {
+    insertIndex = targetIndex - (draggedCategoryIndex < targetIndex ? 1 : 0);
+  }
+  if (insertIndex < 0) insertIndex = 0;
+  if (insertIndex > cats.length) insertIndex = cats.length;
+
+  cats.splice(insertIndex, 0, movedItem);
+
+  draggedCategoryIndex = null;
+  isCategoryDragAllowed = false;
+  renderGalleryCategoryManager();
+  markCategorySavePending();
+};
+
+window.handleCategoryDragEnd = function(e) {
+  draggedCategoryIndex = null;
+  isCategoryDragAllowed = false;
+  document.querySelectorAll('.category-card-row').forEach(r => {
+    r.classList.remove('drop-above', 'drop-below', 'is-dragging');
+    r.setAttribute('draggable', 'false');
+  });
+};
+
+window.markCategorySavePending = function() {
+  const saveBtn = document.querySelector('button[onclick="saveGalleryCategories()"]');
+  if (saveBtn) {
+    saveBtn.style.boxShadow = '0 0 0 3px rgba(0, 102, 255, 0.3)';
+    saveBtn.textContent = '카테고리 순서 저장하기 *';
+  }
+};
+
+window.addGalleryCategory = function() {
+  if (!Array.isArray(adminData.galleryCategories)) {
+    adminData.galleryCategories = [];
+  }
+  const newId = 'cat_' + Date.now().toString(36);
+  adminData.galleryCategories.push({
+    id: newId,
+    name: '새 카테고리'
+  });
+  renderGalleryCategoryManager();
+  markCategorySavePending();
+};
+
+window.deleteGalleryCategory = function(index) {
+  const cats = adminData.galleryCategories;
+  if (!cats || index < 0 || index >= cats.length) return;
+
+  const targetCat = cats[index];
+  const targetId = targetCat.id;
+  const targetName = targetCat.name;
+
+  // Scans adminData.gallery for items using this category
+  const galleryItems = adminData.gallery || [];
+  const inUse = galleryItems.some(item => {
+    if (!item) return false;
+    const itemCat = String(item.category || '').trim().toLowerCase();
+    const normalized = DataService.normalizeCategory(item.category, cats);
+    return itemCat === targetId.toLowerCase() ||
+           itemCat === targetName.toLowerCase() ||
+           normalized === targetId;
+  });
+
+  if (inUse) {
+    alert(`현재 갤러리에서 사용 중인 카테고리입니다.\n[${targetName}] 카테고리를 사용하는 미디어의 카테고리를 먼저 변경해주세요.`);
+    showToast(`[${targetName}] 카테고리가 갤러리에서 사용 중이므로 삭제할 수 없습니다.`);
+    return;
+  }
+
+  cats.splice(index, 1);
+  renderGalleryCategoryManager();
+  showToast(`[${targetName}] 카테고리가 삭제되었습니다.`);
+  markCategorySavePending();
+};
+
+window.saveGalleryCategories = async function() {
+  const cats = adminData.galleryCategories || [];
+  const updatedCategories = [];
+
+  for (let i = 0; i < cats.length; i++) {
+    const nameVal = document.getElementById(`galCatName_${i}`)?.value.trim() || `카테고리 ${i + 1}`;
+    const idVal = document.getElementById(`galCatId_${i}`)?.value.trim() || cats[i].id || `cat_${i + 1}`;
+    updatedCategories.push({
+      id: idVal,
+      name: nameVal
+    });
+  }
+
+  adminData.galleryCategories = updatedCategories;
+  await DataService.updateGalleryCategories(updatedCategories);
+  writeAdminLog('갤러리 카테고리 명칭 및 순서 변경');
+  showToast('카테고리 순서가 저장되었습니다.');
+  renderGalleryCategoryManager();
+};
+
+// ─── 나에게 맞는 과정 찾기 (Course Finder) ───
+window.loadCourseFinderSettings = function() {
+  const finder = adminData.courseFinder || {};
+  const programs = adminData.programs || [];
+
+  // 1. Visible toggle & label
+  const visibleToggle = document.getElementById('finderVisibleToggle');
+  const visibleBadge = document.getElementById('finderVisibleBadge');
+  const visibleLabel = document.getElementById('finderVisibleLabel');
+
+  function updateFinderToggleUI(isChecked) {
+    if (visibleBadge) {
+      visibleBadge.className = `toggle-status-badge ${isChecked ? 'status-green' : 'status-gray'}`;
+    }
+    if (visibleLabel) {
+      visibleLabel.textContent = isChecked ? '공개' : '비공개';
+    }
+  }
+
+  if (visibleToggle) {
+    const isVis = finder.visible !== false;
+    visibleToggle.checked = isVis;
+    updateFinderToggleUI(isVis);
+    visibleToggle.onchange = function() {
+      updateFinderToggleUI(this.checked);
+    };
+  }
+
+  // 2. Title & Subtitle
+  const finderTitleInput = document.getElementById('finderTitle');
+  const finderSubtitleInput = document.getElementById('finderSubtitle');
+  if (finderTitleInput) finderTitleInput.value = finder.title || '나에게 맞는 과정 찾기';
+  if (finderSubtitleInput) finderSubtitleInput.value = finder.subtitle || '3가지 질문에 답하면, 딱 맞는 과정을 추천해드려요.';
+
+  const steps = finder.steps || [];
+
+  // Q1
+  if (steps[0]) {
+    const q1Input = document.getElementById('editFinderQ1');
+    if (q1Input) q1Input.value = steps[0].question || '프리다이빙 경험이 있으신가요?';
+    const opts = steps[0].options || [];
+    if (document.getElementById('editFinderQ1Opt0')) document.getElementById('editFinderQ1Opt0').value = opts[0]?.text || '처음입니다';
+    if (document.getElementById('editFinderQ1Opt1')) document.getElementById('editFinderQ1Opt1').value = opts[1]?.text || '체험만 해봤어요';
+    if (document.getElementById('editFinderQ1Opt2')) document.getElementById('editFinderQ1Opt2').value = opts[2]?.text || '자격증이 있어요';
+  }
+
+  // Q2
+  if (steps[1]) {
+    const q2Input = document.getElementById('editFinderQ2');
+    if (q2Input) q2Input.value = steps[1].question || '어떤 목표를 가지고 계신가요?';
+    const opts = steps[1].options || [];
+    if (document.getElementById('editFinderQ2Opt0')) document.getElementById('editFinderQ2Opt0').value = opts[0]?.text || '한번 체험해보고 싶어요';
+    if (document.getElementById('editFinderQ2Opt1')) document.getElementById('editFinderQ2Opt1').value = opts[1]?.text || '자격증을 취득하고 싶어요';
+    if (document.getElementById('editFinderQ2Opt2')) document.getElementById('editFinderQ2Opt2').value = opts[2]?.text || '더 깊이 도전하고 싶어요';
+    if (document.getElementById('editFinderQ2Opt3')) document.getElementById('editFinderQ2Opt3').value = opts[3]?.text || '강사가 되고 싶어요';
+  }
+
+  // Q3
+  if (steps[2]) {
+    const q3Input = document.getElementById('editFinderQ3');
+    if (q3Input) q3Input.value = steps[2].question || '원하는 교육 기간은 얼마인가요?';
+    const opts = steps[2].options || [];
+    if (document.getElementById('editFinderQ3Opt0')) document.getElementById('editFinderQ3Opt0').value = opts[0]?.text || '반나절 (3~4시간)';
+    if (document.getElementById('editFinderQ3Opt1')) document.getElementById('editFinderQ3Opt1').value = opts[1]?.text || '1~2일';
+    if (document.getElementById('editFinderQ3Opt2')) document.getElementById('editFinderQ3Opt2').value = opts[2]?.text || '3일 이상';
+  }
+
+  // 3. Render Recommendation Results Program Linking Cards (3x2 Responsive Grid)
+  const linkingContainer = document.getElementById('finderResultsLinkingContainer');
+  if (linkingContainer) {
+    const results = finder.results || [];
+    const resultMeta = [
+      { title: '1. 입문 / 체험형 추천', cond: '경험: 없음 | 목표: 체험' },
+      { title: '2. 입문 / 자격증형 추천', cond: '경험: 없음 | 목표: 자격증' },
+      { title: '3. 체험 경험자 추천', cond: '경험: 체험만 해봄' },
+      { title: '4. 심화 과정 추천', cond: '경험: 자격증 | 목표: 더 깊이' },
+      { title: '5. 강사 과정 추천', cond: '경험: 자격증 | 목표: 강사' },
+      { title: '6. 기본 추천', cond: '기타 조합 Fallback' }
+    ];
+
+    linkingContainer.innerHTML = results.map((res, index) => {
+      const meta = resultMeta[index] || { title: `결과 ${index + 1}`, cond: '' };
+      const currentProgId = res.programId || '';
+      const matchedProg = programs.find(p => p.id === currentProgId);
+      const currentTitle = matchedProg ? matchedProg.title : (res.title || '연결 미지정');
+
+      const optionsHtml = programs.map(p => {
+        const isSelected = p.id === currentProgId;
+        return `<option value="${p.id}" ${isSelected ? 'selected' : ''}>${p.title} (ID: ${p.id})</option>`;
+      }).join('');
+
+      return `
+        <div style="padding: 14px 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="font-size: 13px; font-weight: 700; color: var(--admin-text-primary); margin-bottom: 4px;">${meta.title}</div>
+            <div style="font-size: 11.5px; color: var(--admin-text-tertiary); margin-bottom: 8px; background: #F8FAFC; padding: 3px 8px; border-radius: 4px; display: inline-block;">${meta.cond}</div>
+            <div style="font-size: 12px; color: var(--admin-text-secondary); margin-bottom: 12px;">현재 추천: <strong style="color: var(--admin-primary);">${currentTitle}</strong></div>
+          </div>
+          <div>
+            <label class="form-label" style="font-size: 11.5px; font-weight: 600; margin-bottom: 4px;">연결 교육과정</label>
+            <select class="form-select" id="finderResultProgSelect_${index}" style="height: 36px; font-size: 12.5px; font-weight: 600;">
+              ${optionsHtml}
+            </select>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+};
+
+window.saveCourseFinderSettings = async function () {
+  const visibleVal = document.getElementById('finderVisibleToggle')?.checked !== false;
+  const titleVal = document.getElementById('finderTitle')?.value.trim() || '나에게 맞는 과정 찾기';
+  const subtitleVal = document.getElementById('finderSubtitle')?.value.trim() || '3가지 질문에 답하면, 딱 맞는 과정을 추천해드려요.';
+
+  if (!adminData.courseFinder) {
+    adminData.courseFinder = await DataService.getCourseFinder();
+  }
+
+  const courseFinder = adminData.courseFinder;
+  const programs = adminData.programs || [];
+
+  // Update visible, title & subtitle
+  courseFinder.visible = visibleVal;
+  courseFinder.title = titleVal;
+  courseFinder.subtitle = subtitleVal;
+
+  // Update Q1
+  if (!courseFinder.steps[0]) courseFinder.steps[0] = { id: 'experience', question: '', options: [] };
+  courseFinder.steps[0].question = document.getElementById('editFinderQ1')?.value.trim() || '프리다이빙 경험이 있으신가요?';
+  if (!courseFinder.steps[0].options) courseFinder.steps[0].options = [];
+  courseFinder.steps[0].options[0] = { value: 'none', text: document.getElementById('editFinderQ1Opt0')?.value.trim() || '처음입니다' };
+  courseFinder.steps[0].options[1] = { value: 'trial', text: document.getElementById('editFinderQ1Opt1')?.value.trim() || '체험만 해봤어요' };
+  courseFinder.steps[0].options[2] = { value: 'certified', text: document.getElementById('editFinderQ1Opt2')?.value.trim() || '자격증이 있어요' };
+
+  // Update Q2
+  if (!courseFinder.steps[1]) courseFinder.steps[1] = { id: 'goal', question: '', options: [] };
+  courseFinder.steps[1].question = document.getElementById('editFinderQ2')?.value.trim() || '어떤 목표를 가지고 계신가요?';
+  if (!courseFinder.steps[1].options) courseFinder.steps[1].options = [];
+  courseFinder.steps[1].options[0] = { value: 'experience', text: document.getElementById('editFinderQ2Opt0')?.value.trim() || '한번 체험해보고 싶어요' };
+  courseFinder.steps[1].options[1] = { value: 'cert', text: document.getElementById('editFinderQ2Opt1')?.value.trim() || '자격증을 취득하고 싶어요' };
+  courseFinder.steps[1].options[2] = { value: 'advanced', text: document.getElementById('editFinderQ2Opt2')?.value.trim() || '더 깊이 도전하고 싶어요' };
+  courseFinder.steps[1].options[3] = { value: 'instructor', text: document.getElementById('editFinderQ2Opt3')?.value.trim() || '강사가 되고 싶어요' };
+
+  // Update Q3
+  if (!courseFinder.steps[2]) courseFinder.steps[2] = { id: 'duration', question: '', options: [] };
+  courseFinder.steps[2].question = document.getElementById('editFinderQ3')?.value.trim() || '원하는 교육 기간은 얼마인가요?';
+  if (!courseFinder.steps[2].options) courseFinder.steps[2].options = [];
+  courseFinder.steps[2].options[0] = { value: 'half', text: document.getElementById('editFinderQ3Opt0')?.value.trim() || '반나절 (3~4시간)' };
+  courseFinder.steps[2].options[1] = { value: '1-2days', text: document.getElementById('editFinderQ3Opt1')?.value.trim() || '1~2일' };
+  courseFinder.steps[2].options[2] = { value: '3days+', text: document.getElementById('editFinderQ3Opt2')?.value.trim() || '3일 이상' };
+
+  // Update Result program linkages
+  if (Array.isArray(courseFinder.results)) {
+    courseFinder.results.forEach((res, index) => {
+      const selectEl = document.getElementById(`finderResultProgSelect_${index}`);
+      if (selectEl) {
+        const selectedProgId = selectEl.value;
+        res.programId = selectedProgId;
+        const matchedProg = programs.find(p => p.id === selectedProgId);
+        if (matchedProg) {
+          res.title = matchedProg.title;
+          res.desc = matchedProg.subtitle || matchedProg.desc;
+          if (matchedProg.image) res.image = matchedProg.image;
+        }
+      }
+    });
+  }
+
+  await DataService.updateCourseFinder(courseFinder);
+  writeAdminLog('과정 찾기 공개 여부, 질문, 선택지 및 추천 연결 저장');
+  showToast('과정 찾기 설정이 저장되었습니다.');
+  loadCourseFinderSettings();
+};
+
+// ─── SEO 설정 ───
+window.updateSeoOgPreview = function() {
+  const t = document.getElementById('seoTitle')?.value.trim() || 'FLOW FREEDIVING';
+  const d = document.getElementById('seoDesc')?.value.trim() || '처음이어도 괜찮습니다. 프리다이빙, 일상이 되다.';
+  const img = document.getElementById('seoOgImage')?.value.trim() || '';
+
+  const titleEl = document.getElementById('seoOgPreviewTitle');
+  const descEl = document.getElementById('seoOgPreviewDesc');
+  const imgEl = document.getElementById('seoOgPreviewImg');
+  const placeholderEl = document.getElementById('seoOgPreviewImgPlaceholder');
+
+  const ogBoxImg = document.getElementById('seoOgBoxImg');
+  const ogBoxPlaceholder = document.getElementById('seoOgBoxPlaceholder');
+
+  // Character Counter Update
+  const rawDesc = document.getElementById('seoDesc')?.value || '';
+  const charCountEl = document.getElementById('seoDescCharCount');
+  if (charCountEl) {
+    const len = rawDesc.length;
+    charCountEl.textContent = `${len} / 160`;
+    charCountEl.style.color = len > 160 ? '#EF4444' : 'var(--admin-text-tertiary)';
+    charCountEl.style.fontWeight = len > 160 ? '700' : '400';
+  }
+
+  if (titleEl) titleEl.textContent = t;
+  if (descEl) descEl.textContent = d;
+
+  if (imgEl && placeholderEl) {
+    if (img) {
+      imgEl.src = img;
+      imgEl.style.display = 'block';
+      placeholderEl.style.display = 'none';
+    } else {
+      imgEl.style.display = 'none';
+      placeholderEl.style.display = 'flex';
+    }
+  }
+
+  if (ogBoxImg && ogBoxPlaceholder) {
+    if (img) {
+      ogBoxImg.src = img;
+      ogBoxImg.style.display = 'block';
+      ogBoxPlaceholder.style.display = 'none';
+    } else {
+      ogBoxImg.style.display = 'none';
+      ogBoxPlaceholder.style.display = 'flex';
+    }
+  }
+};
+
+window.handleSeoOgUpload = async function(fileInput) {
+  if (!fileInput || !fileInput.files || !fileInput.files.length) return;
+  const file = fileInput.files[0];
+  showToast("대표 이미지 업로드 중...");
+  try {
+    const res = await DataService.uploadFile(file);
+    if (res && res.secure_url) {
+      const ogInput = document.getElementById('seoOgImage');
+      if (ogInput) ogInput.value = res.secure_url;
+      updateSeoOgPreview();
+      showToast("대표 공유 이미지가 업로드되었습니다.");
+    }
+  } catch (err) {
+    console.error("SEO OG image upload failure:", err);
+    showToast("이미지 업로드에 실패했습니다.");
+  }
+};
+
+window.handleSeoOgDelete = function() {
+  const ogInput = document.getElementById('seoOgImage');
+  if (ogInput) ogInput.value = '';
+  updateSeoOgPreview();
+  showToast("대표 공유 이미지가 삭제되었습니다.");
+};
+
 function loadSeo() {
-  const d = adminData.seo;
-  document.getElementById('seoTitle').value = d.title || '';
-  document.getElementById('seoDesc').value = d.description || '';
-  document.getElementById('seoOgImage').value = d.ogImage || '';
+  // 기본 진입 탭: 기본 설정
+  switchSettingsTab('basic');
+
+  // 1. 기본 설정 (Category Manager & Course Finder)
+  renderGalleryCategoryManager();
+  loadCourseFinderSettings();
+
+  // 2. SEO 설정
+  const d = adminData.seo || {};
+  const titleInput = document.getElementById('seoTitle');
+  const descInput = document.getElementById('seoDesc');
+  const ogImageInput = document.getElementById('seoOgImage');
+
+  if (titleInput) {
+    titleInput.value = d.title || '';
+    titleInput.oninput = updateSeoOgPreview;
+  }
+  if (descInput) {
+    descInput.value = d.description || '';
+    descInput.oninput = updateSeoOgPreview;
+  }
+  if (ogImageInput) {
+    ogImageInput.value = d.ogImage || '';
+  }
+
+  updateSeoOgPreview();
 }
 
 window.saveSeo = async function () {
   adminData.seo = {
     ...adminData.seo,
-    title: document.getElementById('seoTitle').value,
-    description: document.getElementById('seoDesc').value,
-    ogImage: document.getElementById('seoOgImage').value
+    title: document.getElementById('seoTitle')?.value.trim() || '',
+    description: document.getElementById('seoDesc')?.value.trim() || '',
+    ogImage: document.getElementById('seoOgImage')?.value.trim() || ''
   };
   await DataService.updateSEO(adminData.seo);
   writeAdminLog('검색엔진 SEO 타이틀/설명 변경');
-  showToast();
+  updateSeoOgPreview();
+  showToast('SEO 설정이 저장되었습니다.');
 };
 
 window.uploadAdminFile = async function (fileInputId, textInputId) {
@@ -2849,11 +3500,12 @@ function renderEditForm(panelName, index) {
   else if (panelName === 'instructors') {
     const isNew = index === -1 || index === undefined || index === null;
     const inst = isNew ? {
-      id: '', name: '', photo: '', role: '', philosophy: '', bio: '', certifications: [], career: [], mainShow: true
+      id: '', name: '', photo: '', role: '', philosophy: '', bio: '', certifications: [], career: [], visible: true
     } : (adminData.instructors[index] || {
-      id: '', name: '', photo: '', role: '', philosophy: '', bio: '', certifications: [], career: [], mainShow: true
+      id: '', name: '', photo: '', role: '', philosophy: '', bio: '', certifications: [], career: [], visible: true
     });
 
+    const isInstVisible = inst.visible !== false;
     const hasPhoto = Boolean(inst.photo && inst.photo.trim());
 
     formHtml = `
@@ -2886,14 +3538,16 @@ function renderEditForm(panelName, index) {
           
           <div class="instructor-right-col">
             <div class="inst-visibility-line-wrap" style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px;">
-              <span class="form-label inst-visibility-label" style="margin-right: 4px; font-weight: 600;">메인 노출</span>
-              <label class="toggle toggle-main" style="margin: 0;">
-                <input type="checkbox" id="customInstMain" ${inst.mainShow !== false ? 'checked' : ''} onchange="
-                  document.getElementById('customInstMainText').textContent = this.checked ? 'ON' : 'OFF';
+              <span class="form-label inst-visibility-label" style="margin-right: 4px; font-weight: 600;">공개 여부</span>
+              <label class="toggle toggle-visible" style="margin: 0;">
+                <input type="checkbox" id="editInstVisible" ${isInstVisible ? 'checked' : ''} onchange="
+                  const statusEl = document.getElementById('editInstVisibleText');
+                  statusEl.textContent = this.checked ? '공개' : '비공개';
+                  statusEl.style.color = this.checked ? 'var(--admin-primary)' : '#EF4444';
                 ">
                 <span class="toggle__slider"></span>
               </label>
-              <span class="toggle-status-text" id="customInstMainText" style="font-weight: 600; font-size: 13px; color: var(--admin-primary);">${inst.mainShow !== false ? 'ON' : 'OFF'}</span>
+              <span class="toggle-status-text" id="editInstVisibleText" style="font-weight: 600; font-size: 13px; color: ${isInstVisible ? 'var(--admin-primary)' : '#EF4444'};">${isInstVisible ? '공개' : '비공개'}</span>
             </div>
             
             <div class="inst-info-row">
@@ -3148,9 +3802,17 @@ function renderEditForm(panelName, index) {
             <div class="form-group" style="flex: 1; min-width: 200px; margin-bottom: 0;">
               <label class="form-label">카테고리</label>
               <select class="form-select" id="editGalCategory">
-                <option value="freediving" ${gal.category === 'freediving' ? 'selected' : ''}>프리다이빙</option>
-                <option value="swimming" ${gal.category === 'swimming' || gal.category === 'eggyeong' ? 'selected' : ''}>수영</option>
-                <option value="etc" ${gal.category !== 'freediving' && gal.category !== 'swimming' && gal.category !== 'eggyeong' ? 'selected' : ''}>기타</option>
+                ${(() => {
+                  const categories = (adminData.galleryCategories && adminData.galleryCategories.length) ? adminData.galleryCategories : [
+                    { id: 'freediving', name: '프리다이빙' },
+                    { id: 'swimming', name: '수영' },
+                    { id: 'etc', name: '기타' }
+                  ];
+                  return categories.map(cat => {
+                    const isSelected = gal.category === cat.id || (cat.id === 'swimming' && gal.category === 'eggyeong');
+                    return `<option value="${cat.id}" ${isSelected ? 'selected' : ''}>${cat.name}</option>`;
+                  }).join('');
+                })()}
               </select>
             </div>
 
@@ -3350,7 +4012,7 @@ window.saveActiveEditForm = async function (panelName, index) {
       return { year: '', text: line.trim() };
     }).filter(c => c.text);
 
-    const mainShowVal = document.getElementById('customInstMain')?.checked ?? true;
+    const visibleVal = (document.getElementById('editInstVisible') || document.getElementById('customInstMain'))?.checked !== false;
 
     if (isNew) {
       const newInst = {
@@ -3363,8 +4025,7 @@ window.saveActiveEditForm = async function (panelName, index) {
         bio: bioVal,
         certifications: certsVal,
         career: careerVal,
-        mainShow: mainShowVal,
-        visible: true
+        visible: visibleVal
       };
       adminData.instructors.push(newInst);
       writeAdminLog(`신규 강사 "${newInst.name}" 등록`);
@@ -3378,8 +4039,7 @@ window.saveActiveEditForm = async function (panelName, index) {
         inst.bio = bioVal;
         inst.certifications = certsVal;
         inst.career = careerVal;
-        inst.mainShow = mainShowVal;
-        inst.visible = true;
+        inst.visible = visibleVal;
         writeAdminLog(`강사 "${inst.name}" 프로필 수정`);
       }
     }
@@ -4160,7 +4820,7 @@ function handleRouting() {
     dashboard: '대시보드', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
     programs: '교육과정 관리', instructors: '강사 관리', reviews: '후기 관리',
     gallery: '갤러리 관리', popup: '팝업 관리', faq: 'FAQ 관리', footer: 'Footer 관리',
-    links: '연동 서비스', seo: 'SEO 설정'
+    links: '연동 서비스', seo: '설정', settings: '설정'
   };
   const subtitles = {
     dashboard: '사이트 운영 현황과 연동 서비스 상태를 한눈에 확인하세요.',
@@ -4174,7 +4834,8 @@ function handleRouting() {
     faq: '고객들이 자주 묻는 질문(FAQ)의 답변 리스트를 구축합니다.',
     footer: '회사 소개 글귀, 하단 사업자 정보 및 공식 SNS 링크 채널을 변경합니다.',
     links: '메인 페이지 예약 버튼 및 상담 채널과 연동될 타사 API 링크를 지정합니다.',
-    seo: '검색 엔진 노출을 위한 페이지 메타 데이터와 공유용 OpenGraph를 설정합니다.'
+    seo: '사이트 전체 기본 설정 및 검색엔진(SEO) 메타 데이터를 통합 관리합니다.',
+    settings: '사이트 전체 기본 설정 및 검색엔진(SEO) 메타 데이터를 통합 관리합니다.'
   };
 
   const titleEl = document.getElementById('panelTitle');
