@@ -71,6 +71,7 @@ export const MOCK_DATA = {
 
   /* ── Course Finder (나에게 맞는 과정 찾기) ── */
   courseFinder: {
+    visible: true,
     title: '나에게 맞는 과정 찾기',
     subtitle: '3가지 질문에 답하면, 딱 맞는 과정을 추천해드려요.',
     steps: [
@@ -394,7 +395,8 @@ export const MOCK_DATA = {
         { year: '2019', text: 'FLOW FREEDIVING 브랜드 설립' },
         { year: '2022', text: '누적 교육 인원 2,000명 돌파' },
         { year: '현재', text: 'Instructor Trainer로서 강사 양성 및 교육 운영 중' }
-      ]
+      ],
+      visible: true
     }
   ],
 
@@ -442,6 +444,11 @@ export const MOCK_DATA = {
       course: 'Level 2',
       date: '2026.06'
     }
+  ],
+  galleryCategories: [
+    { id: 'freediving', name: '프리다이빙' },
+    { id: 'course', name: '강습' },
+    { id: 'etc', name: '기타' }
   ],
 
   gallery: [

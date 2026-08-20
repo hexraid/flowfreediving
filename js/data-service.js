@@ -367,7 +367,11 @@ export const DataService = {
 
   // ─── Course Finder ───
   async getCourseFinder() {
-    return (await getItem('courseFinder')) || MOCK_DATA.courseFinder;
+    const res = (await getItem('courseFinder')) || MOCK_DATA.courseFinder;
+    if (res && res.visible === undefined) {
+      res.visible = true;
+    }
+    return res;
   },
   async updateCourseFinder(data) {
     await setItem('courseFinder', data);
@@ -425,6 +429,42 @@ export const DataService = {
       mediaType: item.mediaType || 'image'
     })) : [];
     await setItem('gallery', sanitized);
+  },
+
+  // ─── Gallery Categories ───
+  async getGalleryCategories() {
+    const cats = await getItem('galleryCategories');
+    if (Array.isArray(cats) && cats.length > 0) return cats;
+    return MOCK_DATA.galleryCategories || [
+      { id: 'freediving', name: '프리다이빙' },
+      { id: 'course', name: '강습' },
+      { id: 'etc', name: '기타' }
+    ];
+  },
+  async updateGalleryCategories(data) {
+    await setItem('galleryCategories', data);
+  },
+  normalizeCategory(category, categoriesList = []) {
+    if (!category) return (categoriesList[0]?.id || 'freediving');
+    const c = String(category).trim().toLowerCase();
+
+    // 1. Direct ID or Name match
+    const directMatch = categoriesList.find(cat =>
+      cat.id.toLowerCase() === c || cat.name.toLowerCase() === c
+    );
+    if (directMatch) return directMatch.id;
+
+    // 2. Legacy alias mappings
+    if (c === 'freediving' || c === '프리다이빙' || c.includes('프리다이빙')) {
+      const match = categoriesList.find(cat => cat.id === 'freediving' || cat.name.includes('프리다이빙'));
+      return match ? match.id : (categoriesList[0]?.id || 'freediving');
+    }
+    if (c === 'course' || c === 'swimming' || c === 'eggyeong' || c === '강습' || c === '수영' || c.includes('강습') || c.includes('수영')) {
+      const match = categoriesList.find(cat => cat.id === 'course' || cat.id === 'swimming' || cat.name.includes('강습') || cat.name.includes('수영'));
+      return match ? match.id : (categoriesList[1]?.id || 'course');
+    }
+
+    return (categoriesList[categoriesList.length - 1]?.id || 'etc');
   },
 
   // ─── FAQ ───

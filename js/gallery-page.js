@@ -57,12 +57,19 @@ async function init() {
     }
   } catch (e) {}
 
+  let categories = [];
+  try {
+    categories = await DataService.getGalleryCategories();
+  } catch (e) {
+    categories = MOCK_DATA.galleryCategories || [];
+  }
+
   try {
     footer = await DataService.getFooter();
   } catch (e) {}
 
   // 1. 갤러리 렌더링
-  renderFullGallery(gallery);
+  renderFullGallery(gallery, categories);
 
   // 2. 푸터 렌더링
   if (footer) {
@@ -115,7 +122,8 @@ function initHeader() {
   });
 }
 
-function renderFullGallery(gallery) {
+// ─── 갤러리 풀 페이지 렌더링 ───
+function renderFullGallery(gallery, categories = []) {
   const grid = document.getElementById('galleryPageGrid');
   const tabs = document.getElementById('galleryPageTabs');
   if (!grid) return;
@@ -127,12 +135,15 @@ function renderFullGallery(gallery) {
 
   // 1. 상단 탭 렌더링 및 이벤트 등록
   if (tabs) {
+    const activeCats = (Array.isArray(categories) && categories.length > 0) ? categories : [
+      { id: 'freediving', name: '프리다이빙' },
+      { id: 'course', name: '강습' },
+      { id: 'etc', name: '기타' }
+    ];
+
     tabs.innerHTML = `
       <button class="gallery-tab is-active" data-category="all">전체</button>
-      <button class="gallery-tab" data-category="freediving">프리다이빙</button>
-      <button class="gallery-tab" data-category="swimming">수영</button>
-      <button class="gallery-tab" data-category="video">영상</button>
-      <button class="gallery-tab" data-category="etc">기타</button>
+      ${activeCats.map(c => `<button class="gallery-tab" data-category="${c.id}">${c.name}</button>`).join('')}
     `;
 
     tabs.querySelectorAll('.gallery-tab').forEach(tab => {
@@ -144,15 +155,18 @@ function renderFullGallery(gallery) {
     });
   }
 
-  // 2. 카테고리/미디어 필터링 및 렌더링 함수
-  function filterFullGallery(categoryOrType) {
+  // 2. 카테고리 필터링 및 렌더링 함수 (사진/영상 모두 카테고리별 동시 필터링)
+  function filterFullGallery(selectedCatId) {
+    const activeCats = (Array.isArray(categories) && categories.length > 0) ? categories : [
+      { id: 'freediving', name: '프리다이빙' },
+      { id: 'course', name: '강습' },
+      { id: 'etc', name: '기타' }
+    ];
+
     const filtered = visibleGallery.filter(item => {
-      if (categoryOrType === 'all') return true;
-      if (categoryOrType === 'video') {
-        return item.mediaType === 'video';
-      }
-      const normalized = normalizeCategory(item.category);
-      return normalized === categoryOrType;
+      if (selectedCatId === 'all') return true;
+      const itemCatId = DataService.normalizeCategory ? DataService.normalizeCategory(item.category, activeCats) : normalizeCategory(item.category);
+      return itemCatId === selectedCatId || String(item.category || '').toLowerCase() === String(selectedCatId).toLowerCase();
     });
 
     state.currentFilteredImages = filtered;
