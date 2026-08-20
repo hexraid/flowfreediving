@@ -3686,3 +3686,131 @@ tr.popup-drag-row.drag-over-bottom td {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   Gallery Category Drag & Drop UX Styles
+   ═══════════════════════════════════════════════ */
+.category-card-row {
+  position: relative;
+  transition: transform 0.15s ease, opacity 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.category-card-row .drag-handle {
+  cursor: grab;
+  user-select: none;
+  font-size: 18px;
+  color: #94A3B8;
+  padding: 4px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.category-card-row .drag-handle:hover {
+  color: var(--admin-primary, #0066FF);
+  background: var(--admin-bg, #F8FAFC);
+}
+
+.category-card-row .drag-handle:active,
+.category-card-row.is-dragging .drag-handle {
+  cursor: grabbing !important;
+  color: var(--admin-primary, #0066FF);
+}
+
+.category-card-row.is-dragging {
+  opacity: 0.45 !important;
+  border: 1px dashed var(--admin-primary, #0066FF) !important;
+  background: #F0F9FF !important;
+  box-shadow: 0 4px 12px rgba(0, 102, 255, 0.15) !important;
+}
+
+.category-card-row.drop-above::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--admin-primary, #0066FF);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 102, 255, 0.4);
+  z-index: 20;
+  pointer-events: none;
+}
+
+.category-card-row.drop-below::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--admin-primary, #0066FF);
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(0, 102, 255, 0.4);
+  z-index: 20;
+  pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .seo-og-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Gallery Card Multi-Select Styles */
+.gallery-card.is-selected {
+  border: 2px solid var(--admin-primary, #0066FF) !important;
+  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.2) !important;
+  background: #F0F9FF !important;
+}
+
+.gal-select-checkbox-wrap {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  z-index: 15;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gal-select-checkbox-wrap input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.gal-card-custom-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 2px solid #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.gal-select-checkbox-wrap:hover .gal-card-custom-check {
+  border-color: var(--admin-primary, #0066FF);
+}
+
+.gal-select-checkbox-wrap input:checked + .gal-card-custom-check {
+  background: var(--admin-primary, #0066FF);
+  border-color: var(--admin-primary, #0066FF);
+}
+
+.gal-select-checkbox-wrap input:checked + .gal-card-custom-check::after {
+  content: '✓';
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
