@@ -88,7 +88,7 @@
       <div class="admin-sidebar__section-title">설정</div>
       <div class="admin-sidebar__nav-group">
         <button class="admin-nav-item" data-panel="seo">
-          <span class="nav-icon">⚙️</span> SEO 설정
+          <span class="nav-icon">⚙️</span> 설정
         </button>
       </div>
 
@@ -614,32 +614,44 @@
               갤러리 이미지 목록 <span class="badge" id="galleryCount">0</span>
             </div>
 
-            <!-- 우측 필터 / 뷰모드 / 추가 버튼 그룹 -->
+            <!-- 우측 필터 / 추가 버튼 그룹 -->
             <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
               <!-- 1. 카테고리 필터 탭 -->
               <div id="galleryCategoryFilterGroup" style="display: inline-flex; background: #F1F5F9; padding: 3px; border-radius: 8px; border: 1px solid var(--admin-border); gap: 2px;">
-                <button type="button" class="gallery-cat-filter-btn" data-cat="all" onclick="changeGalleryFilter('all')" style="border: none; background: #ffffff; color: var(--admin-text-primary); font-size: 12px; font-weight: 600; padding: 5px 12px; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s;">전체</button>
-                <button type="button" class="gallery-cat-filter-btn" data-cat="freediving" onclick="changeGalleryFilter('freediving')" style="border: none; background: transparent; color: var(--admin-text-secondary); font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s;">프리다이빙</button>
-                <button type="button" class="gallery-cat-filter-btn" data-cat="swimming" onclick="changeGalleryFilter('swimming')" style="border: none; background: transparent; color: var(--admin-text-secondary); font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s;">수영</button>
-                <button type="button" class="gallery-cat-filter-btn" data-cat="etc" onclick="changeGalleryFilter('etc')" style="border: none; background: transparent; color: var(--admin-text-secondary); font-size: 12px; font-weight: 500; padding: 5px 12px; border-radius: 6px; cursor: pointer; transition: all 0.15s;">기타</button>
+                <!-- Rendered dynamically by JS -->
               </div>
 
-              <!-- 2. 보기 방식 전환 토글 (목록 보기 | 썸네일 보기) -->
-              <div id="galleryViewModeGroup" style="display: inline-flex; background: #F1F5F9; padding: 3px; border-radius: 8px; border: 1px solid var(--admin-border); gap: 2px;">
-                <button type="button" class="gallery-view-btn" id="galViewListBtn" onclick="changeGalleryViewMode('list')" title="목록 보기" style="border: none; background: #ffffff; color: var(--admin-text-primary); font-size: 12px; font-weight: 600; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); transition: all 0.15s;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
-                  <span>목록 보기</span>
-                </button>
-                <button type="button" class="gallery-view-btn" id="galViewGridBtn" onclick="changeGalleryViewMode('grid')" title="썸네일 보기" style="border: none; background: transparent; color: var(--admin-text-secondary); font-size: 12px; font-weight: 500; padding: 5px 10px; border-radius: 6px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
-                  <span>썸네일 보기</span>
-                </button>
-              </div>
-
-              <!-- 3. 새 미디어 추가 버튼 -->
+              <!-- 2. 새 미디어 추가 버튼 -->
               <button class="admin-btn admin-btn--primary" onclick="showEditForm('gallery')" style="min-height: 32px; height: 32px; padding: 0 14px; font-size: 12px; font-weight: 600; border-radius: 6px;">+ 새 미디어 등록</button>
             </div>
           </div>
+
+          <!-- 일괄 작업 바 (다중 선택 시 노출) -->
+          <div id="galleryBatchActionBar" style="display: none; background: #F0F9FF; border: 1px solid var(--admin-primary, #0066FF); border-radius: 8px; padding: 10px 16px; margin-bottom: 16px; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; transition: all 0.2s;">
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <span style="font-size: 13px; font-weight: 700; color: var(--admin-primary, #0066FF);" id="gallerySelectedCountBadge">0개 선택됨</span>
+              <div style="height: 14px; width: 1px; background: #CBD5E1;"></div>
+              <button type="button" class="admin-btn admin-btn--ghost" onclick="selectAllGalleryItems()" style="font-size: 12px; padding: 4px 10px; height: 30px; background: #ffffff; border: 1px solid var(--admin-border); font-weight: 600;">전체 선택</button>
+              <button type="button" class="admin-btn admin-btn--ghost" onclick="deselectAllGalleryItems()" style="font-size: 12px; padding: 4px 10px; height: 30px; background: #ffffff; border: 1px solid var(--admin-border); font-weight: 600;">선택 해제</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+              <!-- 카테고리 일괄 변경 -->
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <select class="form-select" id="galleryBatchCatSelect" style="height: 32px; font-size: 12px; font-weight: 600; padding: 4px 8px; width: 130px; background: #ffffff;">
+                  <!-- Dynamically populated from adminData.galleryCategories -->
+                </select>
+                <button type="button" class="admin-btn admin-btn--ghost" onclick="batchChangeGalleryCategory()" style="font-size: 12px; padding: 4px 12px; height: 32px; font-weight: 600; background: #ffffff; border: 1px solid var(--admin-border);">카테고리 변경</button>
+              </div>
+
+              <div style="height: 14px; width: 1px; background: #CBD5E1;"></div>
+
+              <!-- 공개 / 비공개 일괄 변경 -->
+              <button type="button" class="admin-btn admin-btn--ghost" onclick="batchChangeGalleryVisibility(true)" style="font-size: 12px; padding: 4px 12px; height: 32px; font-weight: 600; background: #ffffff; color: #10B981; border: 1px solid #10B981; border-radius: 6px;">공개</button>
+              <button type="button" class="admin-btn admin-btn--ghost" onclick="batchChangeGalleryVisibility(false)" style="font-size: 12px; padding: 4px 12px; height: 32px; font-weight: 600; background: #ffffff; color: var(--admin-text-secondary, #64748B); border: 1px solid var(--admin-border, #CBD5E1); border-radius: 6px;">비공개</button>
+            </div>
+          </div>
+
           <div class="dashboard-card" style="padding: 0; overflow: hidden; border-radius: var(--radius-lg);">
             <div id="galleryList"><!-- Rendered dynamically --></div>
           </div>
@@ -924,28 +936,232 @@
         </div>
       </div>
 
-      <!-- SEO Panel -->
+      <!-- Settings Panel (설정) -->
       <div class="admin-panel" id="panel-seo">
-        <div class="admin-card">
-          <div class="form-group">
-            <label class="form-label">페이지 타이틀</label>
-            <input type="text" class="form-input" id="seoTitle">
-          </div>
-          <div class="form-group">
-            <label class="form-label">메타 설명</label>
-            <textarea class="form-textarea" id="seoDesc" rows="3"></textarea>
-          </div>
-          <div class="form-group">
-            <label class="form-label">OG 이미지 URL</label>
-            <div style="display: flex; gap: 8px;">
-              <input type="text" class="form-input" id="seoOgImage">
-              <input type="file" id="seoOgFile" accept="image/*" style="display: none;"
-                onchange="uploadAdminFile('seoOgFile', 'seoOgImage')">
-              <button class="admin-btn admin-btn--ghost" onclick="document.getElementById('seoOgFile').click()"
-                style="white-space: nowrap;">이미지 업로드</button>
+        <!-- Sub-Navigation Tabs -->
+        <div class="admin-card-tabs" style="display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid var(--admin-border); padding-bottom: 0;">
+          <button type="button" class="settings-tab-btn is-active" id="tabBtnBasic" onclick="switchSettingsTab('basic')" style="padding: 10px 20px; font-weight: 700; font-size: 14px; border: none; background: transparent; cursor: pointer; border-bottom: 3px solid var(--admin-primary); color: var(--admin-primary); margin-bottom: -2px;">⚙️ 기본 설정</button>
+          <button type="button" class="settings-tab-btn" id="tabBtnSeo" onclick="switchSettingsTab('seo')" style="padding: 10px 20px; font-weight: 600; font-size: 14px; border: none; background: transparent; cursor: pointer; border-bottom: 3px solid transparent; color: var(--admin-text-secondary); margin-bottom: -2px;">🔍 SEO 설정</button>
+        </div>
+
+        <!-- 1. 기본 설정 탭 (Basic Settings) -->
+        <div class="settings-tab-content" id="tabContentBasic" style="display: block;">
+          
+          <!-- A. 갤러리 카테고리 관리 -->
+          <div class="admin-card" style="margin-bottom: 24px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
+              <div>
+                <h3 class="section-sub-title" style="font-size: 16px; font-weight: 700; color: var(--admin-text-primary); margin: 0;">갤러리 카테고리 관리</h3>
+                <p style="font-size: 12.5px; color: var(--admin-text-secondary); margin-top: 4px;">갤러리에서 사용할 카테고리를 관리합니다.</p>
+              </div>
+              <button type="button" class="admin-btn admin-btn--ghost" onclick="addGalleryCategory()" style="font-size: 12.5px; font-weight: 600;">+ 카테고리 추가</button>
+            </div>
+
+            <!-- Inner Box Container for Category List -->
+            <div style="max-width: 440px; background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 12px; margin-bottom: 16px;">
+              <div id="galleryCategoryManagerContainer" style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+
+            <div style="margin-top: 14px; margin-bottom: 18px; font-size: 12px; color: var(--admin-text-secondary); line-height: 1.5;">
+              💡 드래그하여 순서를 변경할 수 있습니다.<br>
+              ⚠️ 카테고리를 삭제하려면 해당 카테고리를 사용하는 미디어가 없어야 합니다.
+            </div>
+
+            <div style="margin-top: 16px;">
+              <button type="button" class="admin-btn admin-btn--primary" onclick="saveGalleryCategories()">저장하기</button>
             </div>
           </div>
-          <button class="admin-btn admin-btn--primary" onclick="saveSeo()">저장</button>
+
+          <!-- B. 나에게 맞는 과정 찾기 설정 -->
+          <div class="admin-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+              <div>
+                <h3 class="section-sub-title" style="font-size: 16px; font-weight: 700; color: var(--admin-text-primary); margin: 0;">🧩 나에게 맞는 과정 찾기 설정</h3>
+                <p style="font-size: 12.5px; color: var(--admin-text-secondary); margin-top: 4px;">메인 페이지 '맞춤 교육과정 추천' 질문 문구, 선택지 및 최종 추천 교육과정을 설정합니다.</p>
+              </div>
+              
+              <!-- 공개 / 비공개 토글 -->
+              <div style="display: flex; align-items: center; gap: 10px; background: #F8FAFC; padding: 6px 14px; border: 1px solid var(--admin-border); border-radius: 20px;">
+                <span style="font-size: 12.5px; font-weight: 600; color: var(--admin-text-secondary);">공개 여부</span>
+                <label class="toggle toggle-visible" style="margin: 0;">
+                  <input type="checkbox" id="finderVisibleToggle" checked>
+                  <span class="toggle__slider"></span>
+                </label>
+                <span id="finderVisibleBadge" class="toggle-status-badge status-green" style="font-weight: 700; font-size: 12.5px;">
+                  <span class="dot"></span><span id="finderVisibleLabel">공개</span>
+                </span>
+              </div>
+            </div>
+
+            <!-- 기본 정보 2열 그리드 -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px; padding: 16px; background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 8px;">
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">모듈 타이틀</label>
+                <input type="text" class="form-input" id="finderTitle" placeholder="예: 나에게 맞는 과정 찾기" style="background: #ffffff;">
+              </div>
+              <div class="form-group" style="margin-bottom: 0;">
+                <label class="form-label" style="font-weight: 700;">서브 타이틀 (설명 문구)</label>
+                <input type="text" class="form-input" id="finderSubtitle" placeholder="예: 3가지 질문에 답하면, 딱 맞는 과정을 추천해드려요." style="background: #ffffff;">
+              </div>
+            </div>
+
+            <!-- 질문 & 선택지 편집 영역 (데스크톱 3열 반응형 그리드) -->
+            <div style="margin-top: 24px;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 14px; color: var(--admin-text-primary);">📝 질문 단계 및 선택지 편집</h4>
+              
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <!-- 1단계 카드 -->
+                <div style="padding: 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+                  <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--admin-primary);">1단계 질문</span>
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--admin-text-tertiary); background: #F1F5F9; padding: 2px 8px; border-radius: 10px;">경험 여부</span>
+                  </div>
+                  
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600;">질문 문구</label>
+                    <input type="text" class="form-input" id="editFinderQ1" placeholder="예: 프리다이빙 경험이 있으신가요?" style="height: 36px; font-size: 13px;">
+                  </div>
+                  
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; margin-bottom: 2px;">선택지 목록 (3개)</label>
+                    <input type="text" class="form-input" id="editFinderQ1Opt0" placeholder="선택지 1 (처음입니다)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ1Opt1" placeholder="선택지 2 (체험만 해봤어요)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ1Opt2" placeholder="선택지 3 (자격증이 있어요)" style="height: 34px; font-size: 12.5px;">
+                  </div>
+                </div>
+
+                <!-- 2단계 카드 -->
+                <div style="padding: 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+                  <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--admin-primary);">2단계 질문</span>
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--admin-text-tertiary); background: #F1F5F9; padding: 2px 8px; border-radius: 10px;">학습 목표</span>
+                  </div>
+                  
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600;">질문 문구</label>
+                    <input type="text" class="form-input" id="editFinderQ2" placeholder="예: 어떤 목표를 가지고 계신가요?" style="height: 36px; font-size: 13px;">
+                  </div>
+                  
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; margin-bottom: 2px;">선택지 목록 (4개)</label>
+                    <input type="text" class="form-input" id="editFinderQ2Opt0" placeholder="선택지 1 (한번 체험해보고 싶어요)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ2Opt1" placeholder="선택지 2 (자격증을 취득하고 싶어요)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ2Opt2" placeholder="선택지 3 (더 깊이 도전하고 싶어요)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ2Opt3" placeholder="선택지 4 (강사가 되고 싶어요)" style="height: 34px; font-size: 12.5px;">
+                  </div>
+                </div>
+
+                <!-- 3단계 카드 -->
+                <div style="padding: 16px; background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); display: flex; flex-direction: column;">
+                  <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #F1F5F9; display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 14px; font-weight: 700; color: var(--admin-primary);">3단계 질문</span>
+                    <span style="font-size: 11.5px; font-weight: 600; color: var(--admin-text-tertiary); background: #F1F5F9; padding: 2px 8px; border-radius: 10px;">교육 기간</span>
+                  </div>
+                  
+                  <div class="form-group" style="margin-bottom: 12px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600;">질문 문구</label>
+                    <input type="text" class="form-input" id="editFinderQ3" placeholder="예: 원하는 교육 기간은 얼마인가요?" style="height: 36px; font-size: 13px;">
+                  </div>
+                  
+                  <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <label class="form-label" style="font-size: 12px; font-weight: 600; margin-bottom: 2px;">선택지 목록 (3개)</label>
+                    <input type="text" class="form-input" id="editFinderQ3Opt0" placeholder="선택지 1 (반나절 (3~4시간))" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ3Opt1" placeholder="선택지 2 (1~2일)" style="height: 34px; font-size: 12.5px;">
+                    <input type="text" class="form-input" id="editFinderQ3Opt2" placeholder="선택지 3 (3일 이상)" style="height: 34px; font-size: 12.5px;">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 추천 결과별 교육과정 연결 영역 (데스크톱 3열 x 2줄 그리드) -->
+            <div style="margin-top: 24px;">
+              <h4 style="font-size: 14px; font-weight: 700; margin-bottom: 4px; color: var(--admin-text-primary);">🎯 추천 결과별 교육과정 연결</h4>
+              <p style="font-size: 12px; color: var(--admin-text-secondary); margin-bottom: 14px;">사용자가 3단계 응답을 완료했을 때 추천할 교육과정을 지정합니다. (프로그램 ID 기반 연결)</p>
+              
+              <div id="finderResultsLinkingContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px;">
+                <!-- Rendered dynamically by JS -->
+              </div>
+            </div>
+
+            <div style="margin-top: 24px;">
+              <button type="button" class="admin-btn admin-btn--primary" onclick="saveCourseFinderSettings()">과정 찾기 설정 저장하기</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. SEO 설정 탭 (SEO Settings) -->
+        <div class="settings-tab-content" id="tabContentSeo" style="display: none;">
+          <div class="admin-card" style="padding: 20px 24px;">
+            <input type="hidden" id="seoOgImage">
+            <input type="file" id="seoOgFile" accept="image/*" style="display: none;" onchange="handleSeoOgUpload(this)">
+
+            <!-- 1. 페이지 제목 -->
+            <div class="form-group" style="margin-bottom: 14px;">
+              <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+                <label class="form-label" style="font-size: 14px; font-weight: 700; color: var(--admin-text-primary); margin: 0;">페이지 제목</label>
+                <span style="font-size: 12px; color: var(--admin-text-secondary);">검색 결과 및 브라우저 탭에 표시되는 제목입니다.</span>
+              </div>
+              <input type="text" class="form-input" id="seoTitle" placeholder="예: FLOW FREEDIVING | 처음이어도 괜찮습니다. 프리다이빙, 일상이 되다." style="height: 38px; font-size: 13px; background: #ffffff;">
+            </div>
+
+            <!-- 2. 메타 설명 -->
+            <div class="form-group" style="margin-bottom: 16px;">
+              <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px;">
+                <label class="form-label" style="font-size: 14px; font-weight: 700; color: var(--admin-text-primary); margin: 0;">메타 설명</label>
+                <span style="font-size: 12px; color: var(--admin-text-secondary);">검색 결과에 표시되는 설명입니다.</span>
+              </div>
+              <textarea class="form-textarea" id="seoDesc" rows="2" placeholder="사이트 요약 설명을 입력하세요." style="font-size: 13px; line-height: 1.5; height: 60px; resize: none; background: #ffffff;"></textarea>
+              <div style="text-align: right; margin-top: 2px; font-size: 11.5px; color: var(--admin-text-tertiary);" id="seoDescCharCount">0 / 160</div>
+            </div>
+
+            <!-- 3. 대표 공유 이미지 & 카카오톡 공유 미리보기 (2열 컴팩트 그리드) -->
+            <div style="margin-bottom: 16px;">
+              <div style="display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px;">
+                <label class="form-label" style="font-size: 14px; font-weight: 700; color: var(--admin-text-primary); margin: 0;">대표 공유 이미지</label>
+                <span style="font-size: 12px; color: var(--admin-text-secondary);">카카오톡, 네이버, SNS에서 홈페이지를 공유할 때 표시되는 대표 이미지입니다.</span>
+              </div>
+
+              <div class="seo-og-grid" style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 16px; align-items: stretch;">
+                <!-- 왼쪽: 대표 이미지 썸네일 및 변경 버튼 -->
+                <div style="padding: 12px 14px; background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px;">
+                  <div id="seoOgBox" style="width: 100%; max-width: 320px; aspect-ratio: 1.91 / 1; border-radius: 8px; overflow: hidden; border: 1px solid var(--admin-border); background: #0F172A; position: relative;">
+                    <img id="seoOgBoxImg" src="" alt="대표 공유 이미지" style="width: 100%; height: 100%; object-fit: cover; display: none;">
+                    <div id="seoOgBoxPlaceholder" style="width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #94A3B8; font-size: 12px;">
+                      <span>대표 공유 이미지 미설정</span>
+                    </div>
+                  </div>
+                  <div>
+                    <button type="button" class="admin-btn admin-btn--ghost" id="btnSeoOgUpload" onclick="document.getElementById('seoOgFile').click()" style="padding: 5px 14px; font-size: 12.5px; font-weight: 600; background: #ffffff; border: 1px solid var(--admin-border); height: 32px;">
+                      📤 이미지 변경
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 오른쪽: 카카오톡 공유 미리보기 카드 -->
+                <div style="background: #F8FAFC; border: 1px solid var(--admin-border); border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: center;">
+                  <div style="font-size: 12.5px; font-weight: 700; color: var(--admin-text-secondary); margin-bottom: 8px;">카카오톡 공유 미리보기</div>
+                  
+                  <div style="background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; padding: 10px 12px; display: flex; gap: 10px; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                    <img id="seoOgPreviewImg" src="" alt="미리보기 썸네일" style="width: 54px; height: 54px; border-radius: 6px; object-fit: cover; flex-shrink: 0; background: #E2E8F0; display: none;">
+                    <div id="seoOgPreviewImgPlaceholder" style="width: 54px; height: 54px; border-radius: 6px; background: #CBD5E1; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; color: #64748B;">🖼️</div>
+                    <div style="flex: 1; min-width: 0;">
+                      <div id="seoOgPreviewTitle" style="font-size: 12.5px; font-weight: 700; color: var(--admin-text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">FLOW FREEDIVING</div>
+                      <div id="seoOgPreviewDesc" style="font-size: 11.5px; color: var(--admin-text-secondary); line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 2px;">처음이어도 괜찮습니다. 프리다이빙, 일상이 되다.</div>
+                      <div style="font-size: 10.5px; color: var(--admin-text-tertiary);">flowfreediving.kr</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 하단 우측 저장 버튼 -->
+            <div style="display: flex; justify-content: flex-end; margin-top: 10px;">
+              <button type="button" class="admin-btn admin-btn--primary" onclick="saveSeo()" style="min-width: 80px; padding: 8px 22px; font-size: 13.5px; font-weight: 700; height: 38px;">저장</button>
+            </div>
+
+          </div>
         </div>
       </div>
     </main>
@@ -953,6 +1169,18 @@
 
   <!-- Toast -->
   <div class="admin-toast" id="toast">저장되었습니다.</div>
+
+  <!-- Confirm Modal Overlay -->
+  <div class="admin-modal-overlay" id="confirmModalOverlay">
+    <div class="admin-modal" style="max-width: 520px; padding: 28px 32px; text-align: center;">
+      <button class="admin-modal__close" id="confirmModalClose">×</button>
+      <h2 class="admin-modal__title" id="confirmModalTitle" style="font-size: 15.5px; font-weight: 700; color: var(--admin-text-primary); margin-top: 10px; margin-bottom: 20px; line-height: 1.5; white-space: nowrap;"></h2>
+      <div class="admin-modal__actions" style="display: flex; justify-content: center; gap: 10px;">
+        <button type="button" class="admin-btn admin-btn--ghost" id="confirmModalCancel" style="min-height: 38px; min-width: 90px; padding: 0 16px; font-size: 13px; font-weight: 600; background: #ffffff; border: 1px solid var(--admin-border);">취소</button>
+        <button type="button" class="admin-btn admin-btn--primary" id="confirmModalOk" style="min-height: 38px; min-width: 100px; padding: 0 18px; font-size: 13px; font-weight: 700;">변경하기</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Safety Confirmation Modal -->
   <div class="admin-modal-overlay" id="safetyModalOverlay">
@@ -1008,23 +1236,13 @@
     window.toggleInstructorVisible = async function (idx, visible) {
       if (!activeInstructorsArray) return;
       activeInstructorsArray[idx].visible = visible;
-      if (!visible) {
-        activeInstructorsArray[idx].mainShow = false;
-      }
       await DataService.updateInstructors(activeInstructorsArray);
-      writeAdminLog(`강사 "${activeInstructorsArray[idx].name}" 상태 ${visible ? '공개' : '비공개'} 전환`);
-      showToast(visible ? '공개로 변경되었습니다.' : '비공개로 변경되었습니다.');
+      writeAdminLog(`강사 "${activeInstructorsArray[idx].name}" ${visible ? '공개' : '비공개'} 설정`);
+      showToast(visible ? '공개로 설정되었습니다.' : '비공개로 설정되었습니다.');
       renderRestoredInstructorsList();
     };
 
-    window.toggleInstructorMain = async function (idx, mainShow) {
-      if (!activeInstructorsArray) return;
-      activeInstructorsArray[idx].mainShow = mainShow;
-      await DataService.updateInstructors(activeInstructorsArray);
-      writeAdminLog(`강사 "${activeInstructorsArray[idx].name}" 메인 노출 ${mainShow ? '노출' : '미노출'} 전환`);
-      showToast(mainShow ? '메인에 노출됩니다.' : '메인 노출이 취소되었습니다.');
-      renderRestoredInstructorsList();
-    };
+    window.toggleInstructorMain = window.toggleInstructorVisible;
 
     function renderRestoredInstructorsList() {
       const container = document.getElementById('instructorsList');
@@ -1050,7 +1268,6 @@
                 <th style="width: 100px;">사진</th>
                 <th>강사명</th>
                 <th style="width: 120px; text-align: center;">공개 여부</th>
-                <th style="width: 120px; text-align: center;">메인 노출</th>
                 <th>역할 / 소속</th>
                 <th>교육 철학</th>
               </tr>
@@ -1061,18 +1278,13 @@
       let mobileHtml = `<div class="mobile-card-list">`;
 
       if (activeInstructorsArray.length === 0) {
-        desktopHtml += `<tr><td colspan="7" style="text-align:center;color:var(--admin-text-secondary);padding:var(--space-8) 0;">등록된 강사진이 없습니다.</td></tr>`;
+        desktopHtml += `<tr><td colspan="6" style="text-align:center;color:var(--admin-text-secondary);padding:var(--space-8) 0;">등록된 강사진이 없습니다.</td></tr>`;
         mobileHtml += `<div style="text-align:center;color:var(--admin-text-secondary);padding:var(--space-8) 0;">등록된 강사진이 없습니다.</div>`;
       } else {
         activeInstructorsArray.forEach((inst, i) => {
           const isVisible = inst.visible !== false;
           const visText = isVisible ? '공개' : '비공개';
           const visStatusClass = isVisible ? 'status-green' : 'status-red';
-
-          const isMainDisabled = !isVisible;
-          const isMainShow = isVisible && (inst.mainShow === true);
-          const mainText = isMainShow ? '노출' : '미노출';
-          const mainStatusClass = isMainShow ? 'status-blue' : 'status-gray';
 
           desktopHtml += `
             <tr class="clickable-row" onclick="showEditForm('instructors', ${i})">
@@ -1101,17 +1313,6 @@
                   </div>
                 </div>
               </td>
-              <td data-label="메인 노출" style="text-align: center;" onclick="event.stopPropagation()">
-                <div class="list-toggle-cell">
-                  <label class="toggle toggle-main" style="margin: 0;">
-                    <input type="checkbox" ${isMainShow ? 'checked' : ''} ${isMainDisabled ? 'disabled' : ''} onchange="toggleInstructorMain(${i}, this.checked)">
-                    <span class="toggle__slider"></span>
-                  </label>
-                  <div class="toggle-status-badge ${mainStatusClass}">
-                    <span class="dot"></span> ${mainText}
-                  </div>
-                </div>
-              </td>
               <td data-label="역할 / 소속" style="font-size: 13px; color: var(--admin-text-secondary);">${inst.role || ''}</td>
               <td data-label="교육 철학" style="max-width:250px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size: 13px; color: var(--admin-text-secondary);">${inst.philosophy || ''}</td>
             </tr>
@@ -1132,16 +1333,6 @@
                       <span class="toggle__slider"></span>
                     </label>
                     <span class="toggle-status-badge ${visStatusClass}"><span class="dot"></span> ${visText}</span>
-                  </div>
-                </div>
-                <div style="display: flex; justify-content: space-between; align-items: center;" onclick="event.stopPropagation()">
-                  <span style="font-size: 13px; color: var(--admin-text-secondary); font-weight: 500;">메인 노출</span>
-                  <div style="display: flex; align-items: center; gap: 8px;">
-                    <label class="toggle toggle-main" style="margin: 0;">
-                      <input type="checkbox" ${isMainShow ? 'checked' : ''} ${isMainDisabled ? 'disabled' : ''} onchange="toggleInstructorMain(${i}, this.checked)">
-                      <span class="toggle__slider"></span>
-                    </label>
-                    <span class="toggle-status-badge ${mainStatusClass}"><span class="dot"></span> ${mainText}</span>
                   </div>
                 </div>
               </div>
