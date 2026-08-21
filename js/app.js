@@ -25,9 +25,10 @@ const state = {
 async function init() {
   try {
     // Load all data
-    const [links, seo, hero, whyFlow, courseFinder, programs, instructors, reviews, gallery, faq, cta, footer, popups] = await Promise.all([
+    const [links, seo, headerNav, hero, whyFlow, courseFinder, programs, instructors, reviews, gallery, faq, cta, footer, popups] = await Promise.all([
       DataService.getLinks(),
       DataService.getSEO(),
+      DataService.getHeaderNav(),
       DataService.getHero(),
       DataService.getWhyFlow(),
       DataService.getCourseFinder(),
@@ -44,8 +45,9 @@ async function init() {
     state.links = links;
     state.galleryImages = gallery;
 
-    // Apply SEO
+    // Apply SEO & Header Nav Labels
     applySEO(seo);
+    renderHeaderNav(headerNav);
 
     // Render sections
     renderHero(hero);
@@ -87,6 +89,22 @@ function applySEO(seo) {
   if (metaDesc) metaDesc.content = seo.description;
 }
 
+// ─── Header Nav Labels ───
+function renderHeaderNav(navItems) {
+  if (!Array.isArray(navItems) || navItems.length === 0) return;
+
+  navItems.forEach(item => {
+    if (!item || !item.target || !item.label) return;
+    const targets = [item.target, `index.html${item.target}`];
+    targets.forEach(t => {
+      const links = document.querySelectorAll(`a[href="${t}"]`);
+      links.forEach(link => {
+        link.textContent = item.label;
+      });
+    });
+  });
+}
+
 // ─── Header ───
 function initHeader() {
   const header = document.getElementById('header');
@@ -94,7 +112,7 @@ function initHeader() {
   const drawer = document.getElementById('mobileDrawer');
   const overlay = document.getElementById('mobileOverlay');
 
-  let pushedMenuState = false;
+  let isNavigating = false;
 
   function openMobileMenu() {
     if (state.mobileOpen) return;
@@ -103,27 +121,15 @@ function initHeader() {
     drawer?.classList.add('is-active');
     overlay?.classList.add('is-active');
     document.body.classList.add('no-scroll');
-
-    if (!history.state?.mobileMenuOpen) {
-      history.pushState({ mobileMenuOpen: true }, '');
-      pushedMenuState = true;
-    }
   }
 
-  function closeMobileMenu(options = {}) {
+  function closeMobileMenu() {
     if (!state.mobileOpen) return;
     state.mobileOpen = false;
     toggle?.classList.remove('is-active');
     drawer?.classList.remove('is-active');
     overlay?.classList.remove('is-active');
     document.body.classList.remove('no-scroll');
-
-    if (pushedMenuState && !options.isPopState && !options.isNewPage) {
-      pushedMenuState = false;
-      history.back();
-    } else {
-      pushedMenuState = false;
-    }
   }
 
   function toggleMobileMenu() {
@@ -142,23 +148,68 @@ function initHeader() {
     lastScroll = scrollY;
   }, { passive: true });
 
-  // Mobile toggle
+  // Mobile toggle button
   toggle?.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     toggleMobileMenu();
   });
 
-  // Close drawer on link click
+  // Mobile drawer links navigation handler
   drawer?.querySelectorAll('a').forEach(link => {
-    link.addEventListener('click', () => {
+    link.addEventListener('click', (e) => {
       const href = link.getAttribute('href');
-      const isNewPage = href && !href.startsWith('#') && href !== '#';
-      closeMobileMenu({ isNewPage });
+      if (!href) return;
+
+      // Fast double-tap lock
+      if (isNavigating) {
+        e.preventDefault();
+        return;
+      }
+
+      // External page link (e.g. gallery.html)
+      if (!href.startsWith('#') || href === '#') {
+        closeMobileMenu();
+        return; // Allow normal browser navigation to gallery.html
+      }
+
+      // Internal section link (#about, #program, #instructor, #review, #faq)
+      e.preventDefault();
+      e.stopPropagation();
+
+      isNavigating = true;
+      closeMobileMenu();
+
+      const targetEl = document.querySelector(href);
+      if (targetEl) {
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+            const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+
+            window.scrollTo({
+              top: Math.max(0, targetTop),
+              behavior: 'smooth'
+            });
+
+            if (history.replaceState) {
+              history.replaceState(null, '', href);
+            }
+
+            setTimeout(() => {
+              isNavigating = false;
+            }, 400);
+          }, 50);
+        });
+      } else {
+        isNavigating = false;
+      }
     });
   });
 
   // Close drawer on overlay click
-  overlay?.addEventListener('click', () => {
+  overlay?.addEventListener('click', (e) => {
+    e.preventDefault();
     closeMobileMenu();
   });
 
@@ -166,13 +217,6 @@ function initHeader() {
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.mobileOpen) {
       closeMobileMenu();
-    }
-  });
-
-  // Handle popstate for mobile back button
-  window.addEventListener('popstate', () => {
-    if (state.mobileOpen) {
-      closeMobileMenu({ isPopState: true });
     }
   });
 }
@@ -188,10 +232,29 @@ function renderHero(data) {
   const mediaContainer = document.getElementById('heroMedia');
   if (mediaContainer) {
     const videoUrl = data && data.videoUrl ? data.videoUrl.trim() : '';
+    const bgImage = (data && data.bgImage) ? data.bgImage : 'images/hero-bg.jpg';
+
     if (videoUrl) {
       mediaContainer.innerHTML = '';
+
+      // Poster image element placed under video for zero-delay visual display
+      const posterImg = document.createElement('img');
+      posterImg.className = 'hero__image hero__poster';
+      posterImg.src = bgImage;
+      posterImg.alt = 'FLOW FREEDIVING';
+      posterImg.style.position = 'absolute';
+      posterImg.style.inset = '0';
+      posterImg.style.width = '100%';
+      posterImg.style.height = '100%';
+      posterImg.style.objectFit = 'cover';
+      posterImg.style.zIndex = '0';
+      mediaContainer.appendChild(posterImg);
+
+      // Video element with poster, preload, and crossfade transition
       const videoEl = document.createElement('video');
       videoEl.className = 'hero__video';
+      videoEl.poster = bgImage;
+      videoEl.preload = 'metadata';
       videoEl.src = videoUrl;
       videoEl.autoplay = true;
       videoEl.muted = true;
@@ -204,16 +267,34 @@ function renderHero(data) {
       videoEl.setAttribute('playsinline', '');
       videoEl.setAttribute('webkit-playsinline', '');
 
+      videoEl.style.position = 'absolute';
+      videoEl.style.inset = '0';
+      videoEl.style.width = '100%';
+      videoEl.style.height = '100%';
+      videoEl.style.objectFit = 'cover';
+      videoEl.style.zIndex = '1';
+      videoEl.style.opacity = '0';
+      videoEl.style.transition = 'opacity 0.5s ease-in-out';
+
+      const revealVideo = () => {
+        videoEl.style.opacity = '1';
+      };
+
+      videoEl.addEventListener('loadeddata', revealVideo, { once: true });
+      videoEl.addEventListener('canplay', revealVideo, { once: true });
+      videoEl.addEventListener('playing', revealVideo, { once: true });
+
       mediaContainer.appendChild(videoEl);
 
       const playPromise = videoEl.play();
       if (playPromise !== undefined) {
-        playPromise.catch(err => {
+        playPromise.then(() => {
+          revealVideo();
+        }).catch(err => {
           console.warn('[FLOW] Hero video autoplay notice:', err);
         });
       }
     } else {
-      const bgImage = (data && data.bgImage) ? data.bgImage : 'images/hero-bg.jpg';
       mediaContainer.innerHTML = `<img class="hero__image" src="${bgImage}" alt="FLOW FREEDIVING">`;
     }
   }
@@ -838,6 +919,13 @@ function updateLightbox() {
     }
     if (video) {
       const videoSrc = item.videoUrl || item.src || '';
+      const posterSrc = item.thumbnailUrl || item.src || '';
+      if (posterSrc) {
+        video.poster = posterSrc;
+      }
+      video.preload = 'metadata';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
       video.src = videoSrc;
       video.style.display = 'block';
       video.load();

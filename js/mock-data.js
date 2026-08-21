@@ -27,6 +27,16 @@ export const MOCK_DATA = {
     ogUrl: 'https://flowfreediving.kr'
   },
 
+  /* ── 상단 메뉴 설정 (Header Nav) ── */
+  headerNav: [
+    { id: 'about', label: '소개', targetLabel: 'ABOUT 섹션', target: '#about' },
+    { id: 'program', label: '교육과정', targetLabel: 'PROGRAM 섹션', target: '#program' },
+    { id: 'instructor', label: '강사진', targetLabel: 'INSTRUCTOR 섹션', target: '#instructor' },
+    { id: 'review', label: '후기', targetLabel: 'REVIEW 섹션', target: '#review' },
+    { id: 'gallery', label: '갤러리', targetLabel: 'gallery.html', target: 'gallery.html' },
+    { id: 'faq', label: 'FAQ', targetLabel: 'FAQ 섹션', target: '#faq' }
+  ],
+
   /* ── Hero ── */
   hero: {
     videoUrl: '',

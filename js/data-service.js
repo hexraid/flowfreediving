@@ -349,6 +349,49 @@ export const DataService = {
     await setItem('seo', data);
   },
 
+  // ─── Header Nav ───
+  async getHeaderNav() {
+    const data = await getItem('headerNav');
+    const defaults = MOCK_DATA.headerNav;
+
+    const engToKorMap = {
+      'about': '소개',
+      'program': '교육과정',
+      'instructor': '강사진',
+      'review': '후기',
+      'gallery': '갤러리',
+      'faq': 'FAQ'
+    };
+
+    if (Array.isArray(data) && data.length > 0) {
+      let needsMigration = false;
+      const merged = defaults.map(def => {
+        const item = data.find(d => d.id === def.id);
+        let label = (item && item.label && item.label.trim()) ? item.label.trim() : def.label;
+
+        // Convert legacy English defaults to Korean defaults automatically
+        if (engToKorMap[def.id] && label.toLowerCase() === def.id.toLowerCase()) {
+          label = engToKorMap[def.id];
+          needsMigration = true;
+        }
+
+        return {
+          ...def,
+          label
+        };
+      });
+
+      if (needsMigration) {
+        await setItem('headerNav', merged);
+      }
+      return merged;
+    }
+    return defaults;
+  },
+  async updateHeaderNav(data) {
+    await setItem('headerNav', data);
+  },
+
   // ─── Hero ───
   async getHero() {
     return (await getItem('hero')) || MOCK_DATA.hero;

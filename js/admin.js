@@ -74,6 +74,7 @@ async function init() {
       footer: await DataService.getFooter(),
       links: await DataService.getLinks(),
       seo: await DataService.getSEO(),
+      headerNav: await DataService.getHeaderNav(),
       courseFinder: await DataService.getCourseFinder(),
       galleryCategories: await DataService.getGalleryCategories(),
       popup: await DataService.getPopup()
@@ -3286,8 +3287,9 @@ function loadSeo() {
   // 기본 진입 탭: 기본 설정
   switchSettingsTab('basic');
 
-  // 1. 기본 설정 (Category Manager & Course Finder)
+  // 1. 기본 설정 (Category Manager & Header Nav & Course Finder)
   renderGalleryCategoryManager();
+  renderHeaderNavSettings();
   loadCourseFinderSettings();
 
   // 2. SEO 설정
@@ -3310,6 +3312,79 @@ function loadSeo() {
 
   updateSeoOgPreview();
 }
+
+window.renderHeaderNavSettings = function() {
+  const container = document.getElementById('headerNavManagerContainer');
+  if (!container) return;
+
+  const defaults = [
+    { id: 'about', label: '소개', targetLabel: 'ABOUT 섹션', target: '#about' },
+    { id: 'program', label: '교육과정', targetLabel: 'PROGRAM 섹션', target: '#program' },
+    { id: 'instructor', label: '강사진', targetLabel: 'INSTRUCTOR 섹션', target: '#instructor' },
+    { id: 'review', label: '후기', targetLabel: 'REVIEW 섹션', target: '#review' },
+    { id: 'gallery', label: '갤러리', targetLabel: 'gallery.html', target: 'gallery.html' },
+    { id: 'faq', label: 'FAQ', targetLabel: 'FAQ 섹션', target: '#faq' }
+  ];
+
+  const currentNav = adminData.headerNav || defaults;
+  const engToKorMap = {
+    'about': '소개', 'program': '교육과정', 'instructor': '강사진',
+    'review': '후기', 'gallery': '갤러리', 'faq': 'FAQ'
+  };
+
+  const navItems = defaults.map(def => {
+    const item = currentNav.find(d => d.id === def.id);
+    let label = (item && item.label && item.label.trim()) ? item.label.trim() : def.label;
+    if (engToKorMap[def.id] && label.toLowerCase() === def.id.toLowerCase()) {
+      label = engToKorMap[def.id];
+    }
+    return {
+      ...def,
+      label
+    };
+  });
+
+  container.innerHTML = navItems.map((item, idx) => `
+    <div style="background: #ffffff; border: 1px solid var(--admin-border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 160px;">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--admin-text-secondary); margin-bottom: 4px;">메뉴 표시명</label>
+        <input type="text" class="form-input" id="headerNavLabel_${idx}" data-nav-id="${item.id}" value="${item.label || ''}" placeholder="${item.label}" style="height: 36px; font-size: 13px; background: #ffffff; margin-bottom: 0;">
+      </div>
+      <div style="min-width: 150px;">
+        <label style="display: block; font-size: 12px; font-weight: 700; color: var(--admin-text-secondary); margin-bottom: 4px;">연결 대상 (고정)</label>
+        <div style="height: 36px; display: flex; align-items: center; padding: 0 12px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 6px; font-size: 12.5px; font-weight: 600; color: #475569;">
+          🔗 ${item.targetLabel}
+        </div>
+      </div>
+    </div>
+  `).join('');
+};
+
+window.saveHeaderNavSettings = async function() {
+  const defaults = [
+    { id: 'about', label: '소개', targetLabel: 'ABOUT 섹션', target: '#about' },
+    { id: 'program', label: '교육과정', targetLabel: 'PROGRAM 섹션', target: '#program' },
+    { id: 'instructor', label: '강사진', targetLabel: 'INSTRUCTOR 섹션', target: '#instructor' },
+    { id: 'review', label: '후기', targetLabel: 'REVIEW 섹션', target: '#review' },
+    { id: 'gallery', label: '갤러리', targetLabel: 'gallery.html', target: 'gallery.html' },
+    { id: 'faq', label: 'FAQ', targetLabel: 'FAQ 섹션', target: '#faq' }
+  ];
+
+  const updated = defaults.map((def, idx) => {
+    const input = document.getElementById(`headerNavLabel_${idx}`);
+    const val = input ? input.value.trim() : '';
+    return {
+      ...def,
+      label: val || def.label
+    };
+  });
+
+  adminData.headerNav = updated;
+  await DataService.updateHeaderNav(updated);
+  writeAdminLog('상단 메뉴 표시명 변경');
+  showToast('상단 메뉴 설정이 저장되었습니다.');
+  renderHeaderNavSettings();
+};
 
 window.saveSeo = async function () {
   adminData.seo = {

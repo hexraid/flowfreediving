@@ -68,6 +68,11 @@ async function init() {
     footer = await DataService.getFooter();
   } catch (e) {}
 
+  try {
+    const headerNav = await DataService.getHeaderNav();
+    renderHeaderNav(headerNav);
+  } catch (e) {}
+
   // 1. 갤러리 렌더링
   renderFullGallery(gallery, categories);
 
@@ -85,13 +90,26 @@ async function init() {
   initLazyLoading();
 }
 
+function renderHeaderNav(navItems) {
+  if (!Array.isArray(navItems) || navItems.length === 0) return;
+
+  navItems.forEach(item => {
+    if (!item || !item.target || !item.label) return;
+    const targets = [item.target, `index.html${item.target}`];
+    targets.forEach(t => {
+      const links = document.querySelectorAll(`a[href="${t}"]`);
+      links.forEach(link => {
+        link.textContent = item.label;
+      });
+    });
+  });
+}
+
 function initHeader() {
   const header = document.getElementById('header');
   const toggle = document.getElementById('headerToggle');
   const drawer = document.getElementById('mobileDrawer');
   const overlay = document.getElementById('mobileOverlay');
-
-  let pushedMenuState = false;
 
   function openMobileMenu() {
     if (state.mobileOpen) return;
@@ -100,27 +118,15 @@ function initHeader() {
     drawer?.classList.add('is-active');
     overlay?.classList.add('is-active');
     document.body.classList.add('no-scroll');
-
-    if (!history.state?.mobileMenuOpen) {
-      history.pushState({ mobileMenuOpen: true }, '');
-      pushedMenuState = true;
-    }
   }
 
-  function closeMobileMenu(options = {}) {
+  function closeMobileMenu() {
     if (!state.mobileOpen) return;
     state.mobileOpen = false;
     toggle?.classList.remove('is-active');
     drawer?.classList.remove('is-active');
     overlay?.classList.remove('is-active');
     document.body.classList.remove('no-scroll');
-
-    if (pushedMenuState && !options.isPopState && !options.isNewPage) {
-      pushedMenuState = false;
-      history.back();
-    } else {
-      pushedMenuState = false;
-    }
   }
 
   function toggleMobileMenu() {
@@ -136,31 +142,25 @@ function initHeader() {
   }, { passive: true });
 
   toggle?.addEventListener('click', (e) => {
+    e.preventDefault();
     e.stopPropagation();
     toggleMobileMenu();
   });
 
   drawer?.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
-      const href = link.getAttribute('href');
-      const isNewPage = href && !href.startsWith('#') && href !== '#';
-      closeMobileMenu({ isNewPage });
+      closeMobileMenu();
     });
   });
 
-  overlay?.addEventListener('click', () => {
+  overlay?.addEventListener('click', (e) => {
+    e.preventDefault();
     closeMobileMenu();
   });
 
   window.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && state.mobileOpen) {
       closeMobileMenu();
-    }
-  });
-
-  window.addEventListener('popstate', () => {
-    if (state.mobileOpen) {
-      closeMobileMenu({ isPopState: true });
     }
   });
 }
@@ -377,6 +377,13 @@ function updateLightbox() {
     }
     if (video) {
       const videoSrc = item.videoUrl || item.src || '';
+      const posterSrc = item.thumbnailUrl || item.src || '';
+      if (posterSrc) {
+        video.poster = posterSrc;
+      }
+      video.preload = 'metadata';
+      video.setAttribute('playsinline', '');
+      video.setAttribute('webkit-playsinline', '');
       video.src = videoSrc;
       video.style.display = 'block';
       video.load();
