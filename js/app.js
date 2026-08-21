@@ -94,41 +94,86 @@ function initHeader() {
   const drawer = document.getElementById('mobileDrawer');
   const overlay = document.getElementById('mobileOverlay');
 
+  let pushedMenuState = false;
+
+  function openMobileMenu() {
+    if (state.mobileOpen) return;
+    state.mobileOpen = true;
+    toggle?.classList.add('is-active');
+    drawer?.classList.add('is-active');
+    overlay?.classList.add('is-active');
+    document.body.classList.add('no-scroll');
+
+    if (!history.state?.mobileMenuOpen) {
+      history.pushState({ mobileMenuOpen: true }, '');
+      pushedMenuState = true;
+    }
+  }
+
+  function closeMobileMenu(options = {}) {
+    if (!state.mobileOpen) return;
+    state.mobileOpen = false;
+    toggle?.classList.remove('is-active');
+    drawer?.classList.remove('is-active');
+    overlay?.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+
+    if (pushedMenuState && !options.isPopState && !options.isNewPage) {
+      pushedMenuState = false;
+      history.back();
+    } else {
+      pushedMenuState = false;
+    }
+  }
+
+  function toggleMobileMenu() {
+    if (state.mobileOpen) {
+      closeMobileMenu();
+    } else {
+      openMobileMenu();
+    }
+  }
+
   // Scroll behavior
   let lastScroll = 0;
   window.addEventListener('scroll', () => {
     const scrollY = window.scrollY;
-    header.classList.toggle('is-scrolled', scrollY > 50);
+    header?.classList.toggle('is-scrolled', scrollY > 50);
     lastScroll = scrollY;
   }, { passive: true });
 
   // Mobile toggle
-  toggle?.addEventListener('click', () => {
-    state.mobileOpen = !state.mobileOpen;
-    toggle.classList.toggle('is-active', state.mobileOpen);
-    drawer?.classList.toggle('is-active', state.mobileOpen);
-    overlay?.classList.toggle('is-active', state.mobileOpen);
-    document.body.classList.toggle('no-scroll', state.mobileOpen);
+  toggle?.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleMobileMenu();
   });
 
   // Close drawer on link click
   drawer?.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', () => {
-      state.mobileOpen = false;
-      toggle?.classList.remove('is-active');
-      drawer.classList.remove('is-active');
-      overlay?.classList.remove('is-active');
-      document.body.classList.remove('no-scroll');
+      const href = link.getAttribute('href');
+      const isNewPage = href && !href.startsWith('#') && href !== '#';
+      closeMobileMenu({ isNewPage });
     });
   });
 
   // Close drawer on overlay click
   overlay?.addEventListener('click', () => {
-    state.mobileOpen = false;
-    toggle?.classList.remove('is-active');
-    drawer?.classList.remove('is-active');
-    overlay.classList.remove('is-active');
-    document.body.classList.remove('no-scroll');
+    closeMobileMenu();
+  });
+
+  // Close drawer on ESC key
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && state.mobileOpen) {
+      closeMobileMenu();
+    }
+  });
+
+  // Handle popstate for mobile back button
+  window.addEventListener('popstate', () => {
+    if (state.mobileOpen) {
+      closeMobileMenu({ isPopState: true });
+    }
   });
 }
 
@@ -343,20 +388,22 @@ function renderPrograms(programs) {
 
   grid.innerHTML = programs.map(prog => `
     <div class="program-card fade-up" data-program-id="${prog.id}">
-      <div class="program-card__image-wrap">
-        ${prog.image ? `<img class="program-card__image" src="${prog.image}" alt="${prog.title}" loading="lazy">` : `<div class="program-card__image" style="background: var(--midnight); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--accent);">🤿</div>`}
+      <div class="program-card__main">
+        <div class="program-card__image-wrap">
+          ${prog.image ? `<img class="program-card__image" src="${prog.image}" alt="${prog.title}" loading="lazy">` : `<div class="program-card__image" style="background: var(--midnight); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--accent);">🤿</div>`}
+        </div>
+        <div class="program-card__body">
+          <div class="program-card__tags">
+            ${prog.tags.map(tag => `<span class="program-card__tag">${tag}</span>`).join('')}
+          </div>
+          <h3 class="program-card__title">${prog.title}</h3>
+          <p class="program-card__subtitle">${prog.subtitle}</p>
+          <p class="program-card__desc">${prog.desc}</p>
+        </div>
       </div>
-      <div class="program-card__body">
-        <div class="program-card__tags">
-          ${prog.tags.map(tag => `<span class="program-card__tag">${tag}</span>`).join('')}
-        </div>
-        <h3 class="program-card__title">${prog.title}</h3>
-        <p class="program-card__subtitle">${prog.subtitle}</p>
-        <p class="program-card__desc">${prog.desc}</p>
-        <div class="program-card__meta">
-          <span class="program-card__price">${prog.price}</span>
-          <span class="program-card__detail">자세히 보기 ${getIcon('arrowRight')}</span>
-        </div>
+      <div class="program-card__meta">
+        <span class="program-card__price">${prog.price}</span>
+        <span class="program-card__detail">자세히 보기 ${getIcon('arrowRight')}</span>
       </div>
     </div>
   `).join('');
@@ -488,7 +535,6 @@ function renderInstructors(instructors) {
     <div class="instructor-card fade-up" style="margin-bottom: 48px; border-bottom: ${index < visibleInstructors.length - 1 ? '1px solid var(--border-subtle)' : 'none'}; padding-bottom: ${index < visibleInstructors.length - 1 ? '48px' : '0'};">
       <div class="instructor-card__photo-wrap">
         ${inst.photo ? `<img class="instructor-card__photo" src="${inst.photo}" alt="${inst.name}" loading="lazy">` : `<div class="instructor-card__photo" style="background: var(--midnight); display:flex; align-items:center; justify-content:center; font-size: 3rem;">🤿</div>`}
-        <span class="instructor-card__badge">${(inst.role || '').split('/')[0].trim()}</span>
       </div>
       <div class="instructor-card__info">
         <h3 class="instructor-card__name">${inst.name}</h3>
