@@ -37,8 +37,11 @@ export function initSmoothScroll() {
     const link = e.target.closest('a[href^="#"]');
     if (!link) return;
 
+    // Mobile drawer links are handled specifically by initHeader
+    if (link.closest('#mobileDrawer')) return;
+
     const targetId = link.getAttribute('href');
-    if (targetId === '#') return;
+    if (targetId === '#' || !targetId) return;
 
     const targetEl = document.querySelector(targetId);
     if (!targetEl) return;
@@ -46,10 +49,16 @@ export function initSmoothScroll() {
     e.preventDefault();
     const offset = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
 
+    const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - offset;
+
     window.scrollTo({
-      top: targetEl.offsetTop - offset,
+      top: Math.max(0, targetTop),
       behavior: 'smooth'
     });
+
+    if (history.replaceState) {
+      history.replaceState(null, '', targetId);
+    }
   });
 }
 
