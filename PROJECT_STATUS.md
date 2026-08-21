@@ -489,4 +489,22 @@
 * **Vercel Production 환경**: 정상 배포 및 라이브 서비스 가동 중
 * **잔여 결함 및 콘솔 에러**: 0건 (모든 핵심 기능 및 보안 가드 정상 작동 확인 완료)
 
+---
+
+## 16. 모바일 UI/UX 최적화 및 상단 메뉴 관리 기능 확장 완료 내역
+
+1. **모바일 메뉴 이동 화면 튕김 및 스크롤 충돌 결함 완전 해결**:
+   - 모바일 햄버거 메뉴 닫기 시 `history.back()`으로 인한 브라우저의 비동기 스크롤 위치 복원(Scroll Restoration)과 `scrollTo` 간의 충돌을 원천 제거
+   - `closeMobileMenu()` 호출 시 `no-scroll` 레이아웃 리플로우가 완료된 후 `requestAnimationFrame` + `setTimeout(50ms)`을 통해 단일 `window.scrollTo({ top, behavior: 'smooth' })`로 깔끔하게 1회 이동
+   - 연타/중복 클릭 방지 락(`isNavigating`, 400ms) 적용 및 `history.replaceState`를 통한 URL 해시 동기화
+2. **모바일 영상 로딩 및 뷰포트 전환 품질 개선**:
+   - 메인 Hero 비디오 하단에 포스터 이미지 레이어를 즉시(0ms) 노출하고 `<video>` 요소에 `poster` 및 `preload="metadata"` 적용
+   - 영상의 `loadeddata`, `canplay`, `playing` 완료 시점에 `opacity: 1` 페이드인 크로스페이드 전환을 적용하여 모바일 Safari/Chrome에서 검은 화면, 빈 공간, 깨진 첫 프레임 완벽 차단
+   - 갤러리 라이트박스 동영상에 `poster` 및 `preload="metadata"`를 적용하여 팝업 즉시 포스터 표출 및 데이터 로딩 부담 최소화
+3. **관리자 상단 메뉴 설정 구축 및 기본값 한글화**:
+   - `설정 > 기본 설정` 내 **`📌 상단 메뉴 설정`** 카드 신설 (메뉴 표시명 수정 입력창 + 고정 연결 대상 읽기 전용 뱃지)
+   - 고정 연결 대상 100% 보존: `소개(#about)`, `교육과정(#program)`, `강사진(#instructor)`, `후기(#review)`, `갤러리(gallery.html)`, `FAQ(#faq)`
+   - 기본 표시명 한글화 (`소개`, `교육과정`, `강사진`, `후기`, `갤러리`, `FAQ`) 및 PC 상단 헤더 / 모바일 햄버거 드로어 메뉴 동시 100% 실시간 연동
+   - 기존 Firestore/IndexedDB에 남아있는 옛 영문 기본값을 한글 기본값으로 자동 전환하는 하위 호환 마이그레이션 적용
+
 
