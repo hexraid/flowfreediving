@@ -596,9 +596,21 @@
       <div class="admin-panel" id="panel-reviews">
         <!-- List View -->
         <div id="reviewsListContainer" class="panel-view-container list-view-active">
-          <div class="panel-action-bar">
-            <div class="panel-action-bar__title">후기 목록 <span class="badge" id="reviewsCount">0</span></div>
-            <button class="admin-btn admin-btn--primary" onclick="showEditForm('reviews')">+ 새 후기 추가</button>
+          <div class="panel-action-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;">
+            <div class="panel-action-bar__title" style="margin-bottom: 0;">
+              후기 목록 <span class="badge" id="reviewsCount">0</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 16px; flex-wrap: wrap;">
+              <div class="review-date-toggle-box" style="display: flex; align-items: center; gap: 10px; font-size: 13.5px; font-weight: 600; color: #374151; background: #f3f4f6; padding: 6px 14px; border-radius: 20px; border: 1px solid #e5e7eb;">
+                <span>작성날짜 표시</span>
+                <label class="toggle" style="margin: 0;">
+                  <input type="checkbox" id="reviewDateToggle">
+                  <span class="toggle__slider"></span>
+                </label>
+                <span id="reviewDateToggleStatus" style="font-weight: 700; color: #6b7280; min-width: 28px;">OFF</span>
+              </div>
+              <button class="admin-btn admin-btn--primary" onclick="showEditForm('reviews')">+ 새 후기 추가</button>
+            </div>
           </div>
           <div class="dashboard-card" style="padding: 0; overflow: hidden; border-radius: var(--radius-lg);">
             <div id="reviewsList"><!-- Rendered dynamically --></div>

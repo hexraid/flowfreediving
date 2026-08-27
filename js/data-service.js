@@ -455,6 +455,23 @@ export const DataService = {
   async updateReviews(data) {
     await setItem('reviews', data);
   },
+  async getReviewSettings() {
+    const saved = await getItem('reviewSettings');
+    if (saved && typeof saved === 'object') {
+      return {
+        showDate: saved.showDate !== undefined ? Boolean(saved.showDate) : false
+      };
+    }
+    return { showDate: false };
+  },
+  async updateReviewSettings(settings) {
+    const cleanSettings = {
+      showDate: settings && settings.showDate !== undefined ? Boolean(settings.showDate) : false,
+      updatedAt: new Date().toISOString()
+    };
+    await setItem('reviewSettings', cleanSettings);
+    return cleanSettings;
+  },
 
   // ─── Gallery ───
   async getGallery() {

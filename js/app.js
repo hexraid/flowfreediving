@@ -25,7 +25,7 @@ const state = {
 async function init() {
   try {
     // Load all data
-    const [links, seo, headerNav, hero, whyFlow, courseFinder, programs, instructors, reviews, gallery, faq, cta, footer, popups] = await Promise.all([
+    const [links, seo, headerNav, hero, whyFlow, courseFinder, programs, instructors, reviews, reviewSettings, gallery, faq, cta, footer, popups] = await Promise.all([
       DataService.getLinks(),
       DataService.getSEO(),
       DataService.getHeaderNav(),
@@ -35,6 +35,7 @@ async function init() {
       DataService.getVisiblePrograms(),
       DataService.getInstructors(),
       DataService.getReviews(),
+      DataService.getReviewSettings(),
       DataService.getGallery(),
       DataService.getFAQ(),
       DataService.getCTA(),
@@ -55,7 +56,7 @@ async function init() {
     renderCourseFinder(courseFinder);
     renderPrograms(programs);
     renderInstructors(instructors);
-    renderReviews(reviews);
+    renderReviews(reviews, reviewSettings);
     renderGallery(gallery);
     renderFAQ(faq);
     renderCTA(cta);
@@ -643,24 +644,30 @@ function renderInstructors(instructors) {
 }
 
 // ─── Reviews ───
-function renderReviews(reviews) {
+function renderReviews(reviews, reviewSettings) {
   const track = document.getElementById('reviewsTrack');
   const navContainer = document.getElementById('reviewsNav');
   if (!track) return;
 
-  track.innerHTML = reviews.map(review => `
-    <div class="review-card">
-      <div class="review-card__stars">${renderStars(review.stars)}</div>
-      <p class="review-card__text">${review.text}</p>
-      <div class="review-card__author">
-        <div class="review-card__avatar">${review.name.charAt(0)}</div>
-        <div>
-          <p class="review-card__name">${review.name}</p>
-          <p class="review-card__course">${review.course} · ${review.date}</p>
+  const showDate = Boolean(reviewSettings && reviewSettings.showDate);
+
+  track.innerHTML = reviews.map(review => {
+    const formattedDate = (review.date || '').replace(/-/g, '.');
+    const dateMeta = (showDate && formattedDate) ? ` · ${formattedDate}` : '';
+    return `
+      <div class="review-card">
+        <div class="review-card__stars">${renderStars(review.stars)}</div>
+        <p class="review-card__text">${review.text}</p>
+        <div class="review-card__author">
+          <div class="review-card__avatar">${review.name ? review.name.charAt(0) : '관'}</div>
+          <div>
+            <p class="review-card__name">${review.name}</p>
+            <p class="review-card__course">${review.course}${dateMeta}</p>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   // Slider logic
   initReviewSlider(reviews.length);

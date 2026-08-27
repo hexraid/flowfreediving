@@ -124,6 +124,7 @@ async function init() {
       programs: await DataService.getPrograms(),
       instructors: await DataService.getInstructors(),
       reviews: await DataService.getReviews(),
+      reviewSettings: await DataService.getReviewSettings(),
       gallery: await DataService.getGallery(),
       faq: await DataService.getFAQ(),
       footer: await DataService.getFooter(),
@@ -1919,6 +1920,44 @@ const REVIEWS_PAGE_SIZE = 10;
 function loadReviews() {
   const container = document.getElementById('reviewsList');
   const countEl = document.getElementById('reviewsCount');
+
+  // 작성날짜 표시 ON/OFF 토글 상태 동기화 및 이벤트 바인딩
+  const toggleEl = document.getElementById('reviewDateToggle');
+  const statusEl = document.getElementById('reviewDateToggleStatus');
+  if (toggleEl) {
+    const showDate = (adminData && adminData.reviewSettings && adminData.reviewSettings.showDate !== undefined)
+      ? Boolean(adminData.reviewSettings.showDate)
+      : false;
+
+    toggleEl.checked = showDate;
+    if (statusEl) {
+      statusEl.textContent = showDate ? 'ON' : 'OFF';
+      statusEl.style.color = showDate ? '#2563eb' : '#6b7280';
+    }
+
+    if (!toggleEl.dataset.bound) {
+      toggleEl.dataset.bound = 'true';
+      toggleEl.addEventListener('change', async (e) => {
+        const isChecked = e.target.checked;
+        if (statusEl) {
+          statusEl.textContent = isChecked ? 'ON' : 'OFF';
+          statusEl.style.color = isChecked ? '#2563eb' : '#6b7280';
+        }
+        if (!adminData.reviewSettings) {
+          adminData.reviewSettings = { showDate: false };
+        }
+        adminData.reviewSettings.showDate = isChecked;
+
+        try {
+          await DataService.updateReviewSettings(adminData.reviewSettings);
+          showToast(isChecked ? '홈페이지 후기 작성날짜 표시가 ON으로 설정되었습니다.' : '홈페이지 후기 작성날짜 표시가 OFF로 설정되었습니다.');
+        } catch (err) {
+          console.error('[Admin] Review date toggle error:', err);
+          showToast('설정 저장 중 오류가 발생했습니다.', 'danger');
+        }
+      });
+    }
+  }
 
   const reviewItems = (adminData && Array.isArray(adminData.reviews)) ? adminData.reviews : [];
   const totalCount = reviewItems.length;
