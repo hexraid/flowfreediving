@@ -93,11 +93,20 @@
       </div>
 
       <!-- Sidebar User Profile -->
-      <div class="admin-sidebar__user">
-        <div class="user-avatar">A</div>
+      <div class="admin-sidebar__user" id="adminSidebarUser" title="계정 메뉴 열기">
+        <!-- User Popover Menu -->
+        <div class="user-popover-menu" id="userPopoverMenu" style="display: none;">
+          <a href="admin-account.html" class="user-popover-item">
+            <span class="item-icon">👤</span> 내 정보 (계정 관리)
+          </a>
+          <button type="button" class="user-popover-item user-popover-item--danger" id="popoverLogoutBtn">
+            <span class="item-icon">🚪</span> 로그아웃
+          </button>
+        </div>
+        <div class="user-avatar" id="adminUserAvatar">A</div>
         <div class="user-info">
-          <span class="user-name">admin</span>
-          <span class="user-role">관리자</span>
+          <span class="user-name" id="adminUserName">관리자</span>
+          <span class="user-role" id="adminUserRoleInfo">관리자</span>
         </div>
         <button class="logout-btn" id="logoutBtn" title="로그아웃">
           🚪

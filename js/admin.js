@@ -3,7 +3,7 @@
 // ═══════════════════════════════════════════════
 
 import { DataService } from './data-service.js';
-import { onAdminAuthStateChanged, logoutAdmin } from './firebase-service.js';
+import { onAdminAuthStateChanged, logoutAdmin, getCurrentAdminProfile } from './firebase-service.js';
 
 let isInitialized = false;
 
@@ -16,21 +16,76 @@ onAdminAuthStateChanged((user) => {
     window.location.replace('admin-login.html');
   } else {
     sessionStorage.setItem('flow_admin_auth', 'true');
-    const userNameEl = document.querySelector('.user-name');
-    if (userNameEl && user.email) {
-      userNameEl.textContent = user.email.split('@')[0];
-    }
-    
+
+    // 관리자 프로필 정보 동적 반영
+    getCurrentAdminProfile(user).then((profile) => {
+      const avatarEl = document.getElementById('adminUserAvatar');
+      const nameEl = document.getElementById('adminUserName');
+      const roleInfoEl = document.getElementById('adminUserRoleInfo');
+
+      const nameText = profile && profile.name ? profile.name : '관리자';
+      const adminIdText = profile && profile.adminId ? profile.adminId : (user.email ? user.email.split('@')[0] : 'admin');
+      const roleText = profile && profile.role ? profile.role : '관리자';
+
+      if (avatarEl) {
+        avatarEl.textContent = nameText.charAt(0).toUpperCase();
+      }
+      if (nameEl) {
+        nameEl.textContent = nameText;
+      }
+      if (roleInfoEl) {
+        roleInfoEl.textContent = `@${adminIdText} · ${roleText}`;
+      }
+    }).catch((err) => {
+      console.warn('[Admin Profile] Failed to load profile details:', err);
+    });
+
     // Bind logout button
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn && !logoutBtn.dataset.bound) {
       logoutBtn.dataset.bound = 'true';
       logoutBtn.addEventListener('click', async (e) => {
         e.preventDefault();
+        e.stopPropagation();
         try {
           await logoutAdmin();
         } catch (err) {
           console.warn('Logout error:', err);
+        }
+        window.location.replace('admin-login.html');
+      });
+    }
+
+    // Bind sidebar user profile click popover
+    const sidebarUserEl = document.getElementById('adminSidebarUser');
+    const popoverMenu = document.getElementById('userPopoverMenu');
+    const popoverLogoutBtn = document.getElementById('popoverLogoutBtn');
+
+    if (sidebarUserEl && !sidebarUserEl.dataset.bound) {
+      sidebarUserEl.dataset.bound = 'true';
+      sidebarUserEl.addEventListener('click', (e) => {
+        if (e.target.closest('#logoutBtn')) return;
+        if (popoverMenu) {
+          popoverMenu.style.display = popoverMenu.style.display === 'none' ? 'block' : 'none';
+        }
+      });
+
+      document.addEventListener('click', (e) => {
+        if (popoverMenu && sidebarUserEl && !sidebarUserEl.contains(e.target)) {
+          popoverMenu.style.display = 'none';
+        }
+      });
+    }
+
+    if (popoverLogoutBtn && !popoverLogoutBtn.dataset.bound) {
+      popoverLogoutBtn.dataset.bound = 'true';
+      popoverLogoutBtn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+          await logoutAdmin();
+        } catch (err) {
+          console.warn('Popover logout error:', err);
         }
         window.location.replace('admin-login.html');
       });
