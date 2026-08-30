@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GALLERY | FLOW FREEDIVING</title>
+  <meta name="description" content="FLOW FREEDIVING 갤러리 - FLOW와 함께한 생생한 교육 및 바다 이야기들을 확인해보세요.">
+  <meta property="og:title" content="GALLERY | FLOW FREEDIVING">
+  <meta property="og:description" content="FLOW와 함께한 순간들. 프리다이빙 교육, 수영 및 바다 이야기.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="FLOW FREEDIVING">
+  <meta property="og:locale" content="ko_KR">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/sections.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .gallery-page-hero {
+      padding-top: calc(var(--header-height) + 40px);
+      padding-bottom: var(--space-8);
+      background: #ffffff;
+      border-bottom: 1px solid var(--light-border);
+      text-align: center;
+    }
+    .gallery-page-hero .section-title {
+      font-size: clamp(2rem, 4vw, 2.75rem);
+      color: var(--light-text-primary);
+      margin-bottom: 8px;
+      letter-spacing: -0.02em;
+    }
+    .gallery-page-hero .section-subtitle {
+      color: var(--light-text-secondary);
+      font-size: 15px;
+      margin: 0 auto;
+    }
+    .gallery-section {
+      background: var(--light-bg-alt);
+      padding: var(--space-8) 0 var(--space-16);
+      min-height: 60vh;
+    }
+    .gallery-section .gallery-tabs {
+      margin-bottom: var(--space-8);
+      display: flex;
+      justify-content: center;
+      gap: var(--space-2);
+      flex-wrap: wrap;
+    }
+    .gallery-section .gallery__grid {
+      display: grid !important;
+      grid-template-columns: repeat(4, 1fr) !important;
+      gap: var(--space-4) !important;
+    }
+    @media (max-width: 1024px) {
+      .gallery-section .gallery__grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+    }
+    @media (max-width: 768px) {
+      .gallery-section .gallery__grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: var(--space-3) !important;
+      }
+    }
+    .gallery-section .gallery-item {
+      display: block !important;
+      opacity: 1 !important;
+      visibility: visible !important;
+      transform: none !important;
+      position: relative;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      cursor: pointer;
+      aspect-ratio: 1 / 1;
+      background: #0f172a;
+      box-shadow: var(--light-shadow-sm);
+    }
+    .gallery-section .gallery-item img {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      display: block !important;
+      transition: transform var(--duration-slow) var(--ease-smooth);
+    }
+    .gallery-section .gallery-item:hover img {
+      transform: scale(1.08);
+    }
+    .gallery-section .gallery-item__play-badge {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 20, 35, 0.25);
+      transition: all var(--duration-fast, 0.2s) ease;
+      pointer-events: none;
+    }
+    .gallery-section .gallery-item:hover .gallery-item__play-badge {
+      background: rgba(10, 20, 35, 0.45);
+    }
+    .gallery-section .gallery-item__play-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(15, 23, 42, 0.8);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      padding-left: 3px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(4px);
+      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      transition: transform var(--duration-fast, 0.2s) ease, background var(--duration-fast, 0.2s) ease, border-color var(--duration-fast, 0.2s) ease;
+    }
+    .gallery-section .gallery-item:hover .gallery-item__play-icon {
+      transform: scale(1.12);
+      background: rgba(37, 99, 235, 0.9);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+    .lightbox__video {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: var(--radius-md);
+      outline: none;
+      background: #000000;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════ HEADER ═══════ -->
+  <header class="header header--subpage" id="header">
+    <div class="header__inner">
+      <a href="index.html" class="header__logo">FLOW <span>FREEDIVING</span></a>
+
+      <nav class="header__nav" id="headerNav">
+        <a href="index.html#about" class="header__link">소개</a>
+        <a href="index.html#program" class="header__link">교육과정</a>
+        <a href="index.html#instructor" class="header__link">강사진</a>
+        <a href="index.html#review" class="header__link">후기</a>
+        <a href="gallery.html" class="header__link is-active">갤러리</a>
+        <a href="index.html#faq" class="header__link">FAQ</a>
+      </nav>
+
+      <button class="header__toggle" id="headerToggle" aria-label="메뉴 열기">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </div>
+  </header>
+  
+  <!-- Mobile Drawer -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+  <nav class="mobile-drawer" id="mobileDrawer">
+    <a href="index.html#about" class="mobile-drawer__link">소개</a>
+    <a href="index.html#program" class="mobile-drawer__link">교육과정</a>
+    <a href="index.html#instructor" class="mobile-drawer__link">강사진</a>
+    <a href="index.html#review" class="mobile-drawer__link">후기</a>
+    <a href="gallery.html" class="mobile-drawer__link is-active">갤러리</a>
+    <a href="index.html#faq" class="mobile-drawer__link">FAQ</a>
+    <div class="mobile-drawer__cta">
+      <a href="#" class="btn btn--kakao" data-link="kakao">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67-.15.56-.96 3.6-.99 3.83 0 0-.02.17.09.23.11.07.24.02.24.02.31-.04 3.65-2.39 4.22-2.8.58.08 1.17.13 1.78.13 5.52 0 10-3.58 10-7.94S17.52 3 12 3z"/></svg>
+        카카오톡 상담
+      </a>
+      <a href="#" class="btn btn--naver" data-link="naverBooking">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16.273 12.845L7.376 3H3v18h4.726V12.155L16.624 21H21V3h-4.727v9.845z"/></svg>
+        네이버 예약
+      </a>
+    </div>
+  </nav>
+
+  <main>
+    <!-- ═══════ GALLERY HERO ═══════ -->
+    <section class="gallery-page-hero">
+      <div class="container">
+        <div class="section-divider" style="margin: 0 auto 16px auto;"></div>
+        <h1 class="section-title">GALLERY</h1>
+        <p class="section-subtitle">FLOW와 함께한 순간들</p>
+      </div>
+    </section>
+
+    <!-- ═══════ FULL GALLERY CONTENT ═══════ -->
+    <section class="gallery-section section-padding" id="gallery">
+      <div class="container">
+        <div class="gallery-tabs" id="galleryPageTabs">
+          <!-- Rendered by JS -->
+        </div>
+        <div class="gallery__grid" id="galleryPageGrid">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ═══════ FOOTER ═══════ -->
+  <footer class="footer" id="footer">
+    <div class="footer__grid" id="footerGrid">
+      <!-- Rendered by JS -->
+    </div>
+    <div class="footer__bottom" id="footerBottom">
+      <!-- Rendered by JS -->
+    </div>
+  </footer>
+
+  <!-- ═══════ LIGHTBOX ═══════ -->
+  <div class="lightbox" id="lightbox">
+    <button class="lightbox__close" aria-label="닫기">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <button class="lightbox__nav lightbox__prev" aria-label="이전 미디어">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <img class="lightbox__img" src="" alt="갤러리 이미지" style="display: none;">
+    <video class="lightbox__video" controls playsinline style="display: none;"></video>
+    <button class="lightbox__nav lightbox__next" aria-label="다음 미디어">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
+
+  <!-- ═══════ FLOATING CTA ═══════ -->
+  <div class="floating-cta">
+    <button class="floating-btn floating-btn--top" id="floatingTop" aria-label="맨 위로 스크롤">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+    <a href="#" class="floating-btn floating-btn--kakao" data-link="kakao" aria-label="카카오톡 상담">
+      <svg viewBox="0 0 24 24" fill="currentColor" width="22" height="22"><path d="M12 3C6.48 3 2 6.58 2 10.94c0 2.8 1.86 5.27 4.66 6.67-.15.56-.96 3.6-.99 3.83 0 0-.02.17.09.23.11.07.24.02.24.02.31-.04 3.65-2.39 4.22-2.8.58.08 1.17.13 1.78.13 5.52 0 10-3.58 10-7.94S17.52 3 12 3z"/></svg>
+      <span class="floating-btn__tooltip">카톡 상담하기</span>
+    </a>
+  </div>
+
+  <!-- App -->
+  <script type="module" src="js/gallery-page.js"></script>
+</body>
+</html>
