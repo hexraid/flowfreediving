@@ -1504,7 +1504,17 @@ window.loadPrograms = function () {
           <td data-label="카테고리">
             <span class="badge ${getCategoryBadgeClass(prog.category)}">${getCategoryName(prog.category)}</span>
           </td>
-          <td data-label="가격" style="font-weight: 600; color: var(--admin-text-primary);">${prog.price || '별도문의'}</td>
+          <td data-label="가격" style="font-weight: 600; color: var(--admin-text-primary);">
+            ${(() => {
+              const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
+              const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
+              if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
+                const rate = Math.round(((origNum - finalNum) / origNum) * 100);
+                return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
+              }
+              return prog.price || '별도문의';
+            })()}
+          </td>
           <td data-label="공개 여부" onclick="event.stopPropagation()">
             <label class="toggle" style="margin: 0;">
               <input type="checkbox" ${prog.visible ? 'checked' : ''} onchange="toggleProgram(${prog.originalIndex}, this.checked)">
@@ -1521,7 +1531,17 @@ window.loadPrograms = function () {
           <div class="mobile-program-card__info">
             <div class="mobile-program-card__title">${prog.title}</div>
             <div class="mobile-program-card__sub">${prog.subtitle || ''}</div>
-            <div class="mobile-program-card__price">${prog.price || '별도문의'}</div>
+            <div class="mobile-program-card__price">
+              ${(() => {
+                const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
+                const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
+                if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
+                  const rate = Math.round(((origNum - finalNum) / origNum) * 100);
+                  return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
+                }
+                return prog.price || '별도문의';
+              })()}
+            </div>
           </div>
           <div class="mobile-program-card__right" onclick="event.stopPropagation()">
             <span class="badge ${getCategoryBadgeClass(prog.category)}" style="margin-bottom: 4px;">${getCategoryName(prog.category)}</span>
@@ -3566,12 +3586,12 @@ function renderEditForm(panelName, index) {
 
               <div class="prog-edit-2col-row">
                 <div class="form-group" style="margin-bottom: 0;">
-                  <label class="form-label">소제목 (배너 카피)</label>
-                  <input type="text" class="form-input" id="editProgSubtitle" value="${prog.subtitle || ''}" placeholder="예: 입문 과정">
+                  <label class="form-label">정상가 (원) <span style="color: #EF4444;">*</span></label>
+                  <input type="text" class="form-input" id="editProgOriginalPrice" value="${prog.originalPrice || prog.price || ''}" placeholder="예: 500,000">
                 </div>
                 <div class="form-group" style="margin-bottom: 0;">
-                  <label class="form-label">수강료 (노출 텍스트) <span style="color: #EF4444;">*</span></label>
-                  <input type="text" class="form-input" id="editProgPrice" value="${prog.price || ''}" placeholder="예: 450,000">
+                  <label class="form-label">최종 노출가 (원) <span style="color: #EF4444;">*</span></label>
+                  <input type="text" class="form-input" id="editProgPrice" value="${prog.price || ''}" placeholder="예: 300,000">
                 </div>
               </div>
 
@@ -4123,12 +4143,32 @@ window.saveActiveEditForm = async function (panelName, index) {
       visible: true
     } : adminData.programs[index];
 
-    prog.id = progId;
-    prog.title = document.getElementById('editProgTitle').value.trim();
-    prog.category = document.getElementById('editProgCategory').value;
-    prog.subtitle = document.getElementById('editProgSubtitle').value.trim();
-    prog.desc = document.getElementById('editProgDesc').value.trim();
-    prog.price = document.getElementById('editProgPrice').value.trim();
+    const rawOrigStr = (document.getElementById('editProgOriginalPrice')?.value || '').trim();
+    const rawPriceStr = (document.getElementById('editProgPrice')?.value || '').trim();
+
+    const parseNum = (str) => {
+      if (!str) return 0;
+      return parseInt(str.replace(/[^0-9]/g, ''), 10) || 0;
+    };
+
+    const origNum = parseNum(rawOrigStr);
+    const finalNum = parseNum(rawPriceStr);
+
+    if (origNum <= 0 && rawOrigStr !== '') {
+      showToast('정상가는 0원보다 커야 합니다.');
+      return;
+    }
+    if (finalNum <= 0 && rawPriceStr !== '') {
+      showToast('최종 노출가는 0원보다 커야 합니다.');
+      return;
+    }
+    if (origNum > 0 && finalNum > origNum) {
+      showToast('최종 노출가는 정상가보다 높을 수 없습니다.');
+      return;
+    }
+
+    prog.originalPrice = origNum > 0 ? `₩${origNum.toLocaleString()}` : rawOrigStr;
+    prog.price = finalNum > 0 ? `₩${finalNum.toLocaleString()}` : rawPriceStr;
 
     // Save from tags cache
     prog.tags = [...(window.activeEditTags || [])];

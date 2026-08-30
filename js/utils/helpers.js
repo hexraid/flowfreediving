@@ -13,9 +13,14 @@ export function initLinkHandler(links) {
 
     e.preventDefault();
     const key = el.dataset.link;
-    const url = links[key];
+    const safeLinks = links || {};
+    let url = safeLinks[key];
 
-    if (url) {
+    if (!url && (key === 'smartStore' || key === 'smartstore')) {
+      url = safeLinks.smartStore || safeLinks.smartstore || safeLinks.naverStore || safeLinks.store || safeLinks.naverPlace;
+    }
+
+    if (url && url !== '#') {
       if (url.startsWith('tel:')) {
         window.location.href = url;
       } else {

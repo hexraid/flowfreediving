@@ -463,32 +463,74 @@ function showFinderResult(data) {
   });
 }
 
+function parsePriceNumber(str) {
+  if (!str) return 0;
+  return parseInt(String(str).replace(/[^0-9]/g, ''), 10) || 0;
+}
+
+function formatPriceDisplay(originalPrice, price) {
+  const origNum = parsePriceNumber(originalPrice);
+  const finalNum = parsePriceNumber(price);
+
+  const formattedFinal = price || (finalNum > 0 ? `₩${finalNum.toLocaleString()}` : '별도 문의');
+
+  if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
+    const origStr = originalPrice || `₩${origNum.toLocaleString()}`;
+    const rate = Math.round(((origNum - finalNum) / origNum) * 100);
+    return {
+      hasDiscount: true,
+      rate: rate,
+      origStr: origStr,
+      finalStr: formattedFinal
+    };
+  }
+
+  return {
+    hasDiscount: false,
+    rate: 0,
+    origStr: '',
+    finalStr: formattedFinal
+  };
+}
+
 // ─── Programs ───
 function renderPrograms(programs) {
   const grid = document.getElementById('programsGrid');
   if (!grid) return;
 
-  grid.innerHTML = programs.map(prog => `
-    <div class="program-card fade-up" data-program-id="${prog.id}">
-      <div class="program-card__main">
-        <div class="program-card__image-wrap">
-          ${prog.image ? `<img class="program-card__image" src="${prog.image}" alt="${prog.title}" loading="lazy">` : `<div class="program-card__image" style="background: var(--midnight); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--accent);">🤿</div>`}
-        </div>
-        <div class="program-card__body">
-          <div class="program-card__tags">
-            ${prog.tags.map(tag => `<span class="program-card__tag">${tag}</span>`).join('')}
+  grid.innerHTML = programs.map(prog => {
+    const discountInfo = formatPriceDisplay(prog.originalPrice, prog.price);
+
+    return `
+      <div class="program-card fade-up" data-program-id="${prog.id}">
+        <div class="program-card__main">
+          <div class="program-card__image-wrap">
+            ${prog.image ? `<img class="program-card__image" src="${prog.image}" alt="${prog.title}" loading="lazy">` : `<div class="program-card__image" style="background: var(--midnight); display: flex; align-items: center; justify-content: center; font-size: 2rem; color: var(--accent);">🤿</div>`}
           </div>
-          <h3 class="program-card__title">${prog.title}</h3>
-          <p class="program-card__subtitle">${prog.subtitle}</p>
-          <p class="program-card__desc">${prog.desc}</p>
+          <div class="program-card__body">
+            <div class="program-card__tags">
+              ${prog.tags.map(tag => `<span class="program-card__tag">${tag}</span>`).join('')}
+            </div>
+            <h3 class="program-card__title">${prog.title}</h3>
+            <p class="program-card__subtitle">${prog.subtitle}</p>
+            <p class="program-card__desc">${prog.desc}</p>
+          </div>
+        </div>
+        <div class="program-card__meta">
+          <div class="program-card__price-group" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+            ${discountInfo.hasDiscount ? `
+              <span class="program-card__original-price" style="font-size: 12px; color: var(--light-text-tertiary, #94a3b8); text-decoration: line-through;">${discountInfo.origStr}</span>
+              <span class="program-card__price">${discountInfo.finalStr}</span>
+              <span class="program-card__discount-badge" style="font-size: 11px; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 2px 6px; border-radius: 4px; line-height: 1.2;">${discountInfo.rate}% 할인</span>
+            ` : `
+              <span class="program-card__price">${discountInfo.finalStr}</span>
+            `}
+          </div>
+          <span class="program-card__detail">자세히 보기 ${getIcon('arrowRight')}</span>
         </div>
       </div>
-      <div class="program-card__meta">
-        <span class="program-card__price">${prog.price}</span>
-        <span class="program-card__detail">자세히 보기 ${getIcon('arrowRight')}</span>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   // Program card click → modal
   grid.querySelectorAll('.program-card').forEach(card => {
@@ -504,6 +546,25 @@ function openProgramModal(prog) {
   const overlay = document.getElementById('modalOverlay');
   if (!overlay) return;
 
+  // 1순위: 교육과정 개별 스마트스토어 링크 (smartStoreUrl / smartstoreUrl / smartStore)
+  // 2순위: 개별 링크가 비어 있을 경우 연동 서비스 스마트스토어 URL (state.links.smartStore)
+  const individualUrl = (prog.smartStoreUrl || prog.smartstoreUrl || prog.smartStore || '').trim();
+  const globalUrl = (state.links?.smartStore || state.links?.smartstore || state.links?.naverStore || '').trim();
+
+  let targetUrl = '';
+  if (individualUrl && individualUrl !== '#' && !individualUrl.includes('placeholder')) {
+    targetUrl = individualUrl;
+  } else if (globalUrl && globalUrl !== '#' && !globalUrl.includes('placeholder')) {
+    targetUrl = globalUrl;
+  } else if (individualUrl) {
+    targetUrl = individualUrl;
+  } else if (globalUrl) {
+    targetUrl = globalUrl;
+  }
+
+  const isValidSmartStoreUrl = Boolean(targetUrl && targetUrl !== '#' && !targetUrl.includes('placeholder'));
+  const discountInfo = formatPriceDisplay(prog.originalPrice, prog.price);
+
   const modal = overlay.querySelector('.modal');
   modal.innerHTML = `
     <button class="modal__close" id="modalClose">${getIcon('x')}</button>
@@ -513,7 +574,15 @@ function openProgramModal(prog) {
     <div class="modal__meta-grid" style="grid-template-columns: 1fr;">
       <div class="modal__meta-item" style="text-align: center;">
         <p class="modal__meta-label">비용</p>
-        <p class="modal__meta-value">${prog.price}</p>
+        <div class="modal__price-display" style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 4px;">
+          ${discountInfo.hasDiscount ? `
+            <span style="font-size: 13px; color: var(--light-text-tertiary, #94a3b8); text-decoration: line-through;">${discountInfo.origStr}</span>
+            <span class="modal__meta-value" style="font-size: 1.2rem; font-weight: 700; color: var(--light-accent);">${discountInfo.finalStr}</span>
+            <span class="modal__discount-badge" style="font-size: 11.5px; font-weight: 700; color: #ef4444; background: #fee2e2; padding: 2px 8px; border-radius: 12px;">${discountInfo.rate}% 할인</span>
+          ` : `
+            <span class="modal__meta-value">${discountInfo.finalStr}</span>
+          `}
+        </div>
       </div>
     </div>
 
@@ -541,9 +610,11 @@ function openProgramModal(prog) {
     <div class="modal__cta">
       <a href="#" class="btn btn--kakao" data-link="kakao">${getIcon('kakao')} 카톡 상담</a>
       <a href="#" class="btn btn--naver" data-link="naverBooking">${getIcon('naver')} 네이버 예약</a>
-      <a href="#" class="btn btn--naver-outline" data-link="naverPlace" style="border: 1px solid var(--naver-bg); color: var(--naver-bg); background: transparent;">
-        ${getIcon('naverPlace')} 스마트플레이스
-      </a>
+      ${isValidSmartStoreUrl ? `
+        <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" class="btn btn--naver-outline" style="border: 1px solid var(--naver-bg); color: var(--naver-bg); background: transparent;">
+          ${getIcon('shoppingBag')} 스마트스토어
+        </a>
+      ` : ''}
     </div>
   `;
 
@@ -987,7 +1058,7 @@ function updateLightbox() {
       video.src = videoSrc;
       video.style.display = 'block';
       video.load();
-      video.play().catch(() => {});
+      video.play().catch(() => { });
     }
   } else {
     if (video) {
