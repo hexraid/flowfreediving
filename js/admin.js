@@ -271,6 +271,7 @@ async function init() {
 
     // Bind routing listener
     window.addEventListener('hashchange', handleRouting);
+    initAdminKeyboardNav();
 
     // Trigger initial routing
     handleRouting();
@@ -5867,3 +5868,124 @@ window.uploadAdminFile = async function (fileInputId, targetInputId) {
     fileInput.value = '';
   }
 };
+
+// ─── Admin Backspace Keyboard Navigation ───
+let adminKeyboardNavInitialized = false;
+
+function initAdminKeyboardNav() {
+  if (adminKeyboardNavInitialized) return;
+  adminKeyboardNavInitialized = true;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Backspace' && e.keyCode !== 8) return;
+
+    const target = e.target || document.activeElement;
+
+    // 1. Check if focus is inside an editable element -> preserve default character deletion
+    if (isEditingElement(target)) {
+      return;
+    }
+
+    // Prevent default browser back navigation behavior
+    e.preventDefault();
+
+    // 2. Check if a modal/popup is open -> close top modal first
+    if (closeTopAdminModal()) {
+      return;
+    }
+
+    // 3. Navigate back in admin router
+    navigateAdminBack();
+  });
+}
+
+function isEditingElement(target) {
+  if (!target) return false;
+
+  const tagName = target.tagName ? target.tagName.toUpperCase() : '';
+
+  // Standard input, textarea, select
+  if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
+    if (target.disabled || target.readOnly) return false;
+    return true;
+  }
+
+  // contenteditable elements
+  if (target.isContentEditable || target.getAttribute('contenteditable') === 'true') {
+    return true;
+  }
+
+  // Check parent elements for contenteditable
+  if (target.closest) {
+    const editableParent = target.closest('input, textarea, select, [contenteditable="true"]');
+    if (editableParent && !editableParent.disabled && !editableParent.readOnly) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function closeTopAdminModal() {
+  const activeModals = Array.from(document.querySelectorAll('.admin-modal-overlay')).filter(overlay => {
+    const style = window.getComputedStyle(overlay);
+    const isVisible = overlay.classList.contains('is-active') || 
+                      (style.display !== 'none' && style.visibility !== 'hidden');
+    return isVisible;
+  });
+
+  if (activeModals.length === 0) return false;
+
+  const topModal = activeModals[activeModals.length - 1];
+
+  // Try finding cancel/close buttons inside top modal
+  const closeBtn = topModal.querySelector('#safetyModalCancel, #safetyModalClose, #confirmModalCancel, #confirmModalClose, .admin-modal__close, [id$="Cancel"], [id$="Close"]');
+  if (closeBtn) {
+    closeBtn.click();
+  } else {
+    topModal.classList.remove('is-active');
+    setTimeout(() => {
+      topModal.style.display = 'none';
+    }, 250);
+  }
+  return true;
+}
+
+function navigateAdminBack() {
+  const hash = window.location.hash || '#dashboard';
+  const path = hash.substring(1);
+  const parts = path.split('/');
+  const mainPanel = parts[0];
+  const currentHash = window.location.hash;
+
+  if (parts[1] === 'edit') {
+    // If in edit view (e.g. #programs/edit/oneday), return to main list view (#programs)
+    if (window.history.length > 1) {
+      window.history.back();
+      setTimeout(() => {
+        if (window.location.hash === currentHash) {
+          window.location.hash = '#' + mainPanel;
+        }
+      }, 50);
+    } else {
+      window.location.hash = '#' + mainPanel;
+    }
+  } else if (mainPanel !== 'dashboard') {
+    // If in main list view, go back to previous history or dashboard
+    if (window.history.length > 1) {
+      window.history.back();
+      setTimeout(() => {
+        if (window.location.hash === currentHash) {
+          window.location.hash = '#dashboard';
+        }
+      }, 50);
+    } else {
+      window.location.hash = '#dashboard';
+    }
+  } else {
+    if (window.history.length > 1) {
+      window.history.back();
+    }
+  }
+}
+
