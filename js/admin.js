@@ -105,6 +105,8 @@ onAdminAuthStateChanged((user) => {
 // ─── State ───
 let currentPanel = 'dashboard';
 let adminData = {};
+let currentAdminHash = window.location.hash || '#dashboard';
+let previousAdminHash = '#dashboard';
 
 const defaultLogs = [
   { desc: '팝업 노출 순서 변경', time: '8월 16일 18:12', user: 'admin' },
@@ -666,7 +668,11 @@ window.showEditForm = function (panelName, index = -1) {
 };
 
 window.closeEditForm = function (panelName) {
-  window.location.hash = `#${panelName}`;
+  if (previousAdminHash && previousAdminHash !== window.location.hash) {
+    window.location.hash = previousAdminHash;
+  } else {
+    window.location.hash = `#${panelName}`;
+  }
 };
 
 function showEditFormForRouting(panelName, index = -1) {
@@ -4954,6 +4960,10 @@ document.addEventListener('DOMContentLoaded', init);
 
 function handleRouting() {
   const hash = window.location.hash || '#dashboard';
+  if (hash !== currentAdminHash) {
+    previousAdminHash = currentAdminHash;
+    currentAdminHash = hash;
+  }
   const path = hash.substring(1); // 'programs' or 'programs/edit/oneday'
   const parts = path.split('/');
 
@@ -5894,7 +5904,7 @@ function initAdminKeyboardNav() {
       return;
     }
 
-    // 3. Navigate back in admin router
+    // 3. Navigate back reusing existing admin router functions
     navigateAdminBack();
   });
 }
@@ -5927,65 +5937,47 @@ function isEditingElement(target) {
 }
 
 function closeTopAdminModal() {
-  const activeModals = Array.from(document.querySelectorAll('.admin-modal-overlay')).filter(overlay => {
-    const style = window.getComputedStyle(overlay);
-    const isVisible = overlay.classList.contains('is-active') || 
-                      (style.display !== 'none' && style.visibility !== 'hidden');
-    return isVisible;
-  });
-
-  if (activeModals.length === 0) return false;
-
-  const topModal = activeModals[activeModals.length - 1];
-
-  // Try finding cancel/close buttons inside top modal
-  const closeBtn = topModal.querySelector('#safetyModalCancel, #safetyModalClose, #confirmModalCancel, #confirmModalClose, .admin-modal__close, [id$="Cancel"], [id$="Close"]');
-  if (closeBtn) {
-    closeBtn.click();
-  } else {
-    topModal.classList.remove('is-active');
-    setTimeout(() => {
-      topModal.style.display = 'none';
-    }, 250);
+  const modalOverlays = document.querySelectorAll('.admin-modal-overlay');
+  for (let i = modalOverlays.length - 1; i >= 0; i--) {
+    const overlay = modalOverlays[i];
+    // Check if the overlay is actually active and visible on screen
+    if (overlay.classList.contains('is-active')) {
+      const style = window.getComputedStyle(overlay);
+      if (style.display !== 'none' && style.opacity !== '0' && style.visibility !== 'hidden' && style.pointerEvents !== 'none') {
+        const closeBtn = overlay.querySelector('#safetyModalCancel, #safetyModalClose, #confirmModalCancel, #confirmModalClose, .admin-modal__close, [id$="Cancel"], [id$="Close"]');
+        if (closeBtn) {
+          closeBtn.click();
+        } else {
+          overlay.classList.remove('is-active');
+          setTimeout(() => {
+            overlay.style.display = 'none';
+          }, 250);
+        }
+        return true;
+      }
+    }
   }
-  return true;
+  return false;
 }
 
 function navigateAdminBack() {
-  const hash = window.location.hash || '#dashboard';
-  const path = hash.substring(1);
+  const currentHash = window.location.hash || '#dashboard';
+  const path = currentHash.substring(1);
   const parts = path.split('/');
   const mainPanel = parts[0];
-  const currentHash = window.location.hash;
 
+  // Navigate back to the exact previous admin route the user entered from
+  if (previousAdminHash && previousAdminHash !== currentHash) {
+    window.location.hash = previousAdminHash;
+    return;
+  }
+
+  // Fallback if no previous route is recorded
   if (parts[1] === 'edit') {
-    // If in edit view (e.g. #programs/edit/oneday), return to main list view (#programs)
-    if (window.history.length > 1) {
-      window.history.back();
-      setTimeout(() => {
-        if (window.location.hash === currentHash) {
-          window.location.hash = '#' + mainPanel;
-        }
-      }, 50);
-    } else {
-      window.location.hash = '#' + mainPanel;
-    }
+    window.location.hash = `#${mainPanel}`;
   } else if (mainPanel !== 'dashboard') {
-    // If in main list view, go back to previous history or dashboard
-    if (window.history.length > 1) {
-      window.history.back();
-      setTimeout(() => {
-        if (window.location.hash === currentHash) {
-          window.location.hash = '#dashboard';
-        }
-      }, 50);
-    } else {
-      window.location.hash = '#dashboard';
-    }
-  } else {
-    if (window.history.length > 1) {
-      window.history.back();
-    }
+    window.location.hash = '#dashboard';
   }
 }
+
 
