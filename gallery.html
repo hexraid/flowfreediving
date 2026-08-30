@@ -26,8 +26,8 @@
   <link rel="stylesheet" href="css/responsive.css">
   <style>
     .gallery-page-hero {
-      padding-top: calc(var(--header-height) + 40px);
-      padding-bottom: var(--space-8);
+      padding-top: calc(var(--header-height) + 28px);
+      padding-bottom: 20px;
       background: #ffffff;
       border-bottom: 1px solid var(--light-border);
       text-align: center;
@@ -35,7 +35,7 @@
     .gallery-page-hero .section-title {
       font-size: clamp(2rem, 4vw, 2.75rem);
       color: var(--light-text-primary);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       letter-spacing: -0.02em;
     }
     .gallery-page-hero .section-subtitle {
@@ -45,11 +45,11 @@
     }
     .gallery-section {
       background: var(--light-bg-alt);
-      padding: var(--space-8) 0 var(--space-16);
-      min-height: 60vh;
+      padding: var(--space-6) 0 var(--space-12);
+      min-height: 55vh;
     }
     .gallery-section .gallery-tabs {
-      margin-bottom: var(--space-8);
+      margin-bottom: 20px;
       display: flex;
       justify-content: center;
       gap: var(--space-2);
@@ -58,7 +58,14 @@
     .gallery-section .gallery__grid {
       display: grid !important;
       grid-template-columns: repeat(4, 1fr) !important;
-      gap: var(--space-4) !important;
+      gap: 12px !important;
+      min-height: 540px;
+      align-content: start;
+    }
+    @media (min-width: 769px) {
+      .gallery-section .container {
+        max-width: 1120px;
+      }
     }
     @media (max-width: 1024px) {
       .gallery-section .gallery__grid {
@@ -66,9 +73,13 @@
       }
     }
     @media (max-width: 768px) {
+      .gallery-section .gallery-tabs {
+        margin-bottom: var(--space-6);
+      }
       .gallery-section .gallery__grid {
         grid-template-columns: repeat(2, 1fr) !important;
         gap: var(--space-3) !important;
+        min-height: 480px;
       }
     }
     .gallery-section .gallery-item {
@@ -202,6 +213,9 @@
         <div class="gallery__grid" id="galleryPageGrid">
           <!-- Rendered by JS -->
         </div>
+        <div class="gallery-pagination gallery-pagination--bottom" id="galleryPagination">
+          <!-- Rendered by JS -->
+        </div>
       </div>
     </section>
   </main>
@@ -218,6 +232,7 @@
 
   <!-- ═══════ LIGHTBOX ═══════ -->
   <div class="lightbox" id="lightbox">
+    <div class="lightbox__counter" id="lightboxCounter">1 / 1</div>
     <button class="lightbox__close" aria-label="닫기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>

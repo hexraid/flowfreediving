@@ -98,7 +98,7 @@ function renderHeaderNav(navItems) {
     if (!item || !item.target || !item.label) return;
     const targets = [item.target, `index.html${item.target}`];
     targets.forEach(t => {
-      const links = document.querySelectorAll(`a[href="${t}"]`);
+      const links = document.querySelectorAll(`.header__nav a[href="${t}"], .mobile-drawer a[href="${t}"]`);
       links.forEach(link => {
         link.textContent = item.label;
       });
@@ -807,6 +807,7 @@ function renderGallery(gallery) {
 
   const moreBtn = document.getElementById('btnGalleryMore');
   if (moreBtn) {
+    moreBtn.textContent = '더보기';
     moreBtn.onclick = () => {
       window.location.href = 'gallery.html';
     };
@@ -890,6 +891,7 @@ function openLightbox(index) {
     };
   }
 
+  // Keyboard navigation
   if (appLightboxKeydownHandler) {
     document.removeEventListener('keydown', appLightboxKeydownHandler);
   }
@@ -906,6 +908,49 @@ function openLightbox(index) {
     }
   };
   document.addEventListener('keydown', appLightboxKeydownHandler);
+
+  // Touch Swipe for Mobile
+  bindAppLightboxTouchSwipe(lightbox);
+}
+
+let appTouchStartX = 0;
+let appTouchStartY = 0;
+
+function bindAppLightboxTouchSwipe(lightbox) {
+  if (!lightbox || lightbox.dataset.touchBound === 'true') return;
+  lightbox.dataset.touchBound = 'true';
+
+  lightbox.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 1) {
+      appTouchStartX = e.touches[0].clientX;
+      appTouchStartY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  lightbox.addEventListener('touchend', (e) => {
+    if (e.changedTouches.length === 1) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const touchEndY = e.changedTouches[0].clientY;
+      const diffX = touchEndX - appTouchStartX;
+      const diffY = touchEndY - appTouchStartY;
+
+      if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 40) {
+        if (diffX < 0) {
+          // Swipe Left -> Next
+          if (state.currentLightboxIndex < state.galleryImages.length - 1) {
+            state.currentLightboxIndex++;
+            updateLightbox();
+          }
+        } else {
+          // Swipe Right -> Prev
+          if (state.currentLightboxIndex > 0) {
+            state.currentLightboxIndex--;
+            updateLightbox();
+          }
+        }
+      }
+    }
+  }, { passive: true });
 }
 
 function updateLightbox() {
@@ -914,6 +959,12 @@ function updateLightbox() {
 
   const item = state.galleryImages[state.currentLightboxIndex];
   if (!item) return;
+
+  // Counter
+  const counterEl = lightbox.querySelector('#lightboxCounter');
+  if (counterEl) {
+    counterEl.textContent = `${state.currentLightboxIndex + 1} / ${state.galleryImages.length}`;
+  }
 
   const img = lightbox.querySelector('.lightbox__img');
   const video = lightbox.querySelector('.lightbox__video');
@@ -936,9 +987,7 @@ function updateLightbox() {
       video.src = videoSrc;
       video.style.display = 'block';
       video.load();
-      video.play().catch(() => {
-        // Autoplay policy handling
-      });
+      video.play().catch(() => {});
     }
   } else {
     if (video) {
@@ -1142,14 +1191,19 @@ function renderFooter(data) {
 // ─── Floating CTA ───
 function initFloatingCTA() {
   const topBtn = document.getElementById('floatingTop');
+  if (!topBtn) return;
 
-  window.addEventListener('scroll', () => {
-    if (topBtn) {
-      topBtn.classList.toggle('is-visible', window.scrollY > 600);
-    }
-  }, { passive: true });
+  const handleScroll = () => {
+    const isMobile = window.innerWidth <= 768;
+    topBtn.classList.toggle('is-visible', isMobile && window.scrollY > 500);
+  };
 
-  topBtn?.addEventListener('click', () => {
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  window.addEventListener('resize', handleScroll, { passive: true });
+  handleScroll();
+
+  topBtn.addEventListener('click', (e) => {
+    e.preventDefault();
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }

@@ -368,7 +368,7 @@ function renderPanel(name) {
 
   // Update title & subtitle matching design mockup
   const titles = {
-    dashboard: '대시보드', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
+    dashboard: '관리 홈', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
     programs: '교육과정 관리', instructors: '강사 관리', reviews: '후기 관리',
     gallery: '갤러리 관리', popup: '팝업 관리', faq: 'FAQ 관리', footer: 'Footer 관리',
     links: '연동 서비스', seo: '설정', settings: '설정'
@@ -4997,7 +4997,7 @@ function handleRouting() {
 
   // 3. Render page title & description
   const titles = {
-    dashboard: '대시보드', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
+    dashboard: '관리 홈', hero: '메인 Hero 관리', whyflow: 'WHY FLOW 관리',
     programs: '교육과정 관리', instructors: '강사 관리', reviews: '후기 관리',
     gallery: '갤러리 관리', popup: '팝업 관리', faq: 'FAQ 관리', footer: 'Footer 관리',
     links: '연동 서비스', seo: '설정', settings: '설정'

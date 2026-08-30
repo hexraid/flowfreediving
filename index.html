@@ -189,16 +189,12 @@
           <p class="section-subtitle fade-up">FLOW와 함께한 순간들</p>
         </div>
 
-        <!-- 사진 그리드 시작 전 우측 상단 전체보기 링크 -->
-        <div class="gallery-header-action fade-up" id="galleryMoreWrap" style="display: flex; justify-content: flex-end; margin-bottom: 20px; position: relative; z-index: 10;">
-          <a href="gallery.html" class="gallery-more-link" id="btnGalleryMore" onclick="window.location.href='gallery.html';" style="display: inline-flex; align-items: center; gap: 4px; font-size: 14px; font-weight: 600; text-decoration: none; cursor: pointer; padding: 4px 0;">
-            <span>전체보기</span>
-            <span class="gallery-more-arrow" style="font-size: 15px; display: inline-block; transition: transform 0.2s ease;">→</span>
-          </a>
-        </div>
-
         <div class="gallery__grid stagger" id="galleryGrid">
           <!-- Rendered by JS (최대 8개 대표 이미지 미리보기) -->
+        </div>
+
+        <div class="gallery-more-wrap fade-up" id="galleryMoreWrap" style="text-align: center; margin-top: 20px;">
+          <a href="gallery.html" class="btn btn--secondary gallery-more-btn" id="btnGalleryMore">더보기</a>
         </div>
       </div>
     </section>
@@ -242,6 +238,7 @@
 
   <!-- ═══════ LIGHTBOX ═══════ -->
   <div class="lightbox" id="lightbox">
+    <div class="lightbox__counter" id="lightboxCounter">1 / 1</div>
     <button class="lightbox__close" aria-label="닫기">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="24" height="24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>

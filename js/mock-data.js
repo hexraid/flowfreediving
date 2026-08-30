@@ -457,19 +457,27 @@ export const MOCK_DATA = {
   ],
   galleryCategories: [
     { id: 'freediving', name: '프리다이빙' },
+    { id: 'swimming', name: '입영' },
     { id: 'course', name: '강습' },
     { id: 'etc', name: '기타' }
   ],
 
   gallery: [
-    { src: 'images/gallery-1.jpg', alt: '풀장에서 프리다이빙 연습', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-2.jpg', alt: '수중 호흡 훈련', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-3.jpg', alt: '버디 시스템 안전 교육', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-4.jpg', alt: '해양에서 프리다이빙', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-5.jpg', alt: '깊은 바다 속 프리다이버', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-6.jpg', alt: '수중 촬영', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-7.jpg', alt: '단체 교육 후 기념 촬영', category: 'freediving', mediaType: 'image' },
-    { src: 'images/gallery-8.jpg', alt: '프리다이빙 커뮤니티 펀다이빙', category: 'freediving', mediaType: 'image' }
+    { src: 'images/gallery-1.jpg', alt: '풀장에서 프리다이빙 연습', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-2.jpg', alt: '수중 호흡 훈련', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-3.jpg', alt: '버디 시스템 안전 교육', category: 'course', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-4.jpg', alt: '해양에서 프리다이빙', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-5.jpg', alt: '깊은 바다 속 프리다이버', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-6.jpg', alt: '수중 촬영 현장', category: 'etc', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-7.jpg', alt: '단체 교육 후 기념 촬영', category: 'course', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-8.jpg', alt: '프리다이빙 커뮤니티 펀다이빙', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-1.jpg', alt: '입영 클래스 다리 동작 실습', category: 'swimming', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-2.jpg', alt: '입영 수중 호흡 및 밸런스', category: 'swimming', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-3.jpg', alt: '강습 세션 피드백', category: 'course', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-4.jpg', alt: '해양 세션 다이빙 교육', category: 'freediving', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-5.jpg', alt: '수중 스페셜 영상', category: 'freediving', mediaType: 'video', videoUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4', thumbnailUrl: 'images/gallery-5.jpg', visible: true, enabled: true },
+    { src: 'images/gallery-6.jpg', alt: '입영 실습 현장 스케치', category: 'swimming', mediaType: 'image', visible: true, enabled: true },
+    { src: 'images/gallery-7.jpg', alt: '수중 릴렉세이션 모음', category: 'etc', mediaType: 'image', visible: true, enabled: true }
   ],
 
   /* ── FAQ ── */
