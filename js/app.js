@@ -569,7 +569,7 @@ function openProgramModal(prog) {
   modal.innerHTML = `
     <button class="modal__close" id="modalClose">${getIcon('x')}</button>
     <h2 class="modal__title">${prog.title}</h2>
-    <p class="modal__subtitle">${prog.subtitle} — ${prog.desc}</p>
+    <p class="modal__subtitle">${prog.subtitle ? `${prog.subtitle} — ` : ''}${prog.desc || ''}</p>
 
     <div class="modal__meta-grid" style="grid-template-columns: 1fr;">
       <div class="modal__meta-item" style="text-align: center;">

@@ -852,7 +852,7 @@ function renderDashboardPopupAlerts() {
   if (!container) return;
 
   const popups = (adminData.popup || []).map((p, index) => ({ ...p, originalIndex: index }));
-  
+
   // Filter active popups based on enabled status and date range
   const activePopups = popups.filter(p => getPopupStatus(p) === 'active');
 
@@ -1506,14 +1506,14 @@ window.loadPrograms = function () {
           </td>
           <td data-label="가격" style="font-weight: 600; color: var(--admin-text-primary);">
             ${(() => {
-              const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
-              const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
-              if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
-                const rate = Math.round(((origNum - finalNum) / origNum) * 100);
-                return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
-              }
-              return prog.price || '별도문의';
-            })()}
+            const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
+            const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
+            if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
+              const rate = Math.round(((origNum - finalNum) / origNum) * 100);
+              return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
+            }
+            return prog.price || '별도문의';
+          })()}
           </td>
           <td data-label="공개 여부" onclick="event.stopPropagation()">
             <label class="toggle" style="margin: 0;">
@@ -1533,14 +1533,14 @@ window.loadPrograms = function () {
             <div class="mobile-program-card__sub">${prog.subtitle || ''}</div>
             <div class="mobile-program-card__price">
               ${(() => {
-                const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
-                const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
-                if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
-                  const rate = Math.round(((origNum - finalNum) / origNum) * 100);
-                  return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
-                }
-                return prog.price || '별도문의';
-              })()}
+            const origNum = parseInt((prog.originalPrice || '').replace(/[^0-9]/g, ''), 10) || 0;
+            const finalNum = parseInt((prog.price || '').replace(/[^0-9]/g, ''), 10) || 0;
+            if (origNum > 0 && finalNum > 0 && origNum > finalNum) {
+              const rate = Math.round(((origNum - finalNum) / origNum) * 100);
+              return `<span style="text-decoration: line-through; color: #94a3b8; font-size: 11px; margin-right: 4px;">${prog.originalPrice}</span><span>${prog.price}</span> <span style="font-size: 11px; font-weight: 700; color: #ef4444;">(${rate}% 할인)</span>`;
+            }
+            return prog.price || '별도문의';
+          })()}
             </div>
           </div>
           <div class="mobile-program-card__right" onclick="event.stopPropagation()">
@@ -1842,7 +1842,7 @@ function checkInstructorsOrderChanged() {
     applyContainer.style.display = 'flex';
     const pageStartIndex = (currentInstructorsPage - 1) * INSTRUCTORS_PAGE_SIZE;
     const reorderedPageItems = newOrderIndices.map(idx => adminData.instructors[idx]);
-    
+
     const newFullList = [...adminData.instructors];
     newFullList.splice(pageStartIndex, reorderedPageItems.length, ...reorderedPageItems);
     tempInstructorsOrder = newFullList;
@@ -2165,7 +2165,7 @@ window.toggleGalleryItemSelection = function (index, isChecked) {
     selectedGalleryIndexes.delete(index);
   }
   updateGalleryBatchActionBar();
-  
+
   const cardEl = document.getElementById(`galCard_${index}`);
   if (cardEl) {
     if (isChecked) {
@@ -2206,7 +2206,7 @@ function populateGalleryBatchCatSelect(force = false) {
   if (!selectEl) return;
 
   const categories = (adminData && Array.isArray(adminData.galleryCategories)) ? adminData.galleryCategories : [];
-  
+
   // 이미 옵션이 들어있고 force가 false면 기존 선택값을 유지
   if (!force && selectEl.options.length > 1) {
     return;
@@ -2529,21 +2529,21 @@ function initGalleryDragAndDrop() {
     });
   });
 
-    grid.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      const draggingCard = grid.querySelector('.dragging');
-      if (!draggingCard) return;
-      const cardsAfter = [...grid.querySelectorAll('.draggable-gallery-card:not(.dragging)')];
-      const afterCard = cardsAfter.find(c => {
-        const rect = c.getBoundingClientRect();
-        return (e.clientX < rect.left + rect.width / 2) && (e.clientY < rect.bottom);
-      });
-      if (afterCard == null) {
-        grid.appendChild(draggingCard);
-      } else {
-        grid.insertBefore(draggingCard, afterCard);
-      }
+  grid.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const draggingCard = grid.querySelector('.dragging');
+    if (!draggingCard) return;
+    const cardsAfter = [...grid.querySelectorAll('.draggable-gallery-card:not(.dragging)')];
+    const afterCard = cardsAfter.find(c => {
+      const rect = c.getBoundingClientRect();
+      return (e.clientX < rect.left + rect.width / 2) && (e.clientY < rect.bottom);
     });
+    if (afterCard == null) {
+      grid.appendChild(draggingCard);
+    } else {
+      grid.insertBefore(draggingCard, afterCard);
+    }
+  });
 }
 
 function checkGalleryOrderChanged() {
@@ -2914,7 +2914,7 @@ window.saveLinks = async function () {
 };
 
 // ═══════ Settings (설정 — 기본 설정 & SEO 설정) ═══════
-window.switchSettingsTab = function(tabName) {
+window.switchSettingsTab = function (tabName) {
   const isBasic = tabName === 'basic';
   const btnBasic = document.getElementById('tabBtnBasic');
   const btnSeo = document.getElementById('tabBtnSeo');
@@ -2941,19 +2941,19 @@ window.switchSettingsTab = function(tabName) {
 let draggedCategoryIndex = null;
 let isCategoryDragAllowed = false;
 
-window.enableCategoryCardDrag = function(handleEl) {
+window.enableCategoryCardDrag = function (handleEl) {
   isCategoryDragAllowed = true;
   const row = handleEl.closest('.category-card-row');
   if (row) row.setAttribute('draggable', 'true');
 };
 
-window.disableCategoryCardDrag = function(handleEl) {
+window.disableCategoryCardDrag = function (handleEl) {
   isCategoryDragAllowed = false;
   const row = handleEl.closest('.category-card-row');
   if (row) row.setAttribute('draggable', 'false');
 };
 
-window.renderGalleryCategoryManager = function() {
+window.renderGalleryCategoryManager = function () {
   const container = document.getElementById('galleryCategoryManagerContainer');
   if (!container) return;
 
@@ -2994,7 +2994,7 @@ window.renderGalleryCategoryManager = function() {
   `).join('');
 };
 
-window.handleCategoryDragStart = function(e, index) {
+window.handleCategoryDragStart = function (e, index) {
   if (!isCategoryDragAllowed) {
     e.preventDefault();
     return false;
@@ -3007,7 +3007,7 @@ window.handleCategoryDragStart = function(e, index) {
   e.dataTransfer.effectAllowed = 'move';
 };
 
-window.handleCategoryDragOver = function(e, index) {
+window.handleCategoryDragOver = function (e, index) {
   e.preventDefault();
   if (draggedCategoryIndex === null || draggedCategoryIndex === index) return;
   e.dataTransfer.dropEffect = 'move';
@@ -3027,14 +3027,14 @@ window.handleCategoryDragOver = function(e, index) {
   }
 };
 
-window.handleCategoryDragLeave = function(e) {
+window.handleCategoryDragLeave = function (e) {
   const row = e.currentTarget;
   if (row) {
     row.classList.remove('drop-above', 'drop-below');
   }
 };
 
-window.handleCategoryDrop = function(e, targetIndex) {
+window.handleCategoryDrop = function (e, targetIndex) {
   e.preventDefault();
   const row = e.currentTarget;
   const dropPos = row?.dataset?.dropPos || 'below';
@@ -3073,7 +3073,7 @@ window.handleCategoryDrop = function(e, targetIndex) {
   markCategorySavePending();
 };
 
-window.handleCategoryDragEnd = function(e) {
+window.handleCategoryDragEnd = function (e) {
   draggedCategoryIndex = null;
   isCategoryDragAllowed = false;
   document.querySelectorAll('.category-card-row').forEach(r => {
@@ -3082,7 +3082,7 @@ window.handleCategoryDragEnd = function(e) {
   });
 };
 
-window.markCategorySavePending = function() {
+window.markCategorySavePending = function () {
   const saveBtn = document.querySelector('button[onclick="saveGalleryCategories()"]');
   if (saveBtn) {
     saveBtn.style.boxShadow = '0 0 0 3px rgba(0, 102, 255, 0.3)';
@@ -3090,7 +3090,7 @@ window.markCategorySavePending = function() {
   }
 };
 
-window.addGalleryCategory = function() {
+window.addGalleryCategory = function () {
   if (!Array.isArray(adminData.galleryCategories)) {
     adminData.galleryCategories = [];
   }
@@ -3103,7 +3103,7 @@ window.addGalleryCategory = function() {
   markCategorySavePending();
 };
 
-window.deleteGalleryCategory = function(index) {
+window.deleteGalleryCategory = function (index) {
   const cats = adminData.galleryCategories;
   if (!cats || index < 0 || index >= cats.length) return;
 
@@ -3118,8 +3118,8 @@ window.deleteGalleryCategory = function(index) {
     const itemCat = String(item.category || '').trim().toLowerCase();
     const normalized = DataService.normalizeCategory(item.category, cats);
     return itemCat === targetId.toLowerCase() ||
-           itemCat === targetName.toLowerCase() ||
-           normalized === targetId;
+      itemCat === targetName.toLowerCase() ||
+      normalized === targetId;
   });
 
   if (inUse) {
@@ -3134,7 +3134,7 @@ window.deleteGalleryCategory = function(index) {
   markCategorySavePending();
 };
 
-window.saveGalleryCategories = async function() {
+window.saveGalleryCategories = async function () {
   const cats = adminData.galleryCategories || [];
   const updatedCategories = [];
 
@@ -3155,7 +3155,7 @@ window.saveGalleryCategories = async function() {
 };
 
 // ─── 나에게 맞는 과정 찾기 (Course Finder) ───
-window.loadCourseFinderSettings = function() {
+window.loadCourseFinderSettings = function () {
   const finder = adminData.courseFinder || {};
   const programs = adminData.programs || [];
 
@@ -3177,7 +3177,7 @@ window.loadCourseFinderSettings = function() {
     const isVis = finder.visible !== false;
     visibleToggle.checked = isVis;
     updateFinderToggleUI(isVis);
-    visibleToggle.onchange = function() {
+    visibleToggle.onchange = function () {
       updateFinderToggleUI(this.checked);
     };
   }
@@ -3330,7 +3330,7 @@ window.saveCourseFinderSettings = async function () {
 };
 
 // ─── SEO 설정 ───
-window.updateSeoOgPreview = function() {
+window.updateSeoOgPreview = function () {
   const t = document.getElementById('seoTitle')?.value.trim() || 'FLOW FREEDIVING';
   const d = document.getElementById('seoDesc')?.value.trim() || '처음이어도 괜찮습니다. 프리다이빙, 일상이 되다.';
   const img = document.getElementById('seoOgImage')?.value.trim() || '';
@@ -3379,7 +3379,7 @@ window.updateSeoOgPreview = function() {
   }
 };
 
-window.handleSeoOgUpload = async function(fileInput) {
+window.handleSeoOgUpload = async function (fileInput) {
   if (!fileInput || !fileInput.files || !fileInput.files.length) return;
   const file = fileInput.files[0];
   showToast("대표 이미지 업로드 중...");
@@ -3397,7 +3397,7 @@ window.handleSeoOgUpload = async function(fileInput) {
   }
 };
 
-window.handleSeoOgDelete = function() {
+window.handleSeoOgDelete = function () {
   const ogInput = document.getElementById('seoOgImage');
   if (ogInput) ogInput.value = '';
   updateSeoOgPreview();
@@ -3434,7 +3434,7 @@ function loadSeo() {
   updateSeoOgPreview();
 }
 
-window.renderHeaderNavSettings = function() {
+window.renderHeaderNavSettings = function () {
   const container = document.getElementById('headerNavManagerContainer');
   if (!container) return;
 
@@ -3481,7 +3481,7 @@ window.renderHeaderNavSettings = function() {
   `).join('');
 };
 
-window.saveHeaderNavSettings = async function() {
+window.saveHeaderNavSettings = async function () {
   const defaults = [
     { id: 'about', label: '소개', targetLabel: 'ABOUT 섹션', target: '#about' },
     { id: 'program', label: '교육과정', targetLabel: 'PROGRAM 섹션', target: '#program' },
@@ -3999,16 +3999,16 @@ function renderEditForm(panelName, index) {
               <label class="form-label">카테고리</label>
               <select class="form-select" id="editGalCategory">
                 ${(() => {
-                  const categories = (adminData.galleryCategories && adminData.galleryCategories.length) ? adminData.galleryCategories : [
-                    { id: 'freediving', name: '프리다이빙' },
-                    { id: 'swimming', name: '수영' },
-                    { id: 'etc', name: '기타' }
-                  ];
-                  return categories.map(cat => {
-                    const isSelected = gal.category === cat.id || (cat.id === 'swimming' && gal.category === 'eggyeong');
-                    return `<option value="${cat.id}" ${isSelected ? 'selected' : ''}>${cat.name}</option>`;
-                  }).join('');
-                })()}
+        const categories = (adminData.galleryCategories && adminData.galleryCategories.length) ? adminData.galleryCategories : [
+          { id: 'freediving', name: '프리다이빙' },
+          { id: 'swimming', name: '수영' },
+          { id: 'etc', name: '기타' }
+        ];
+        return categories.map(cat => {
+          const isSelected = gal.category === cat.id || (cat.id === 'swimming' && gal.category === 'eggyeong');
+          return `<option value="${cat.id}" ${isSelected ? 'selected' : ''}>${cat.name}</option>`;
+        }).join('');
+      })()}
               </select>
             </div>
 
@@ -4166,6 +4166,15 @@ window.saveActiveEditForm = async function (panelName, index) {
       showToast('최종 노출가는 정상가보다 높을 수 없습니다.');
       return;
     }
+
+    const titleEl = document.getElementById('editProgTitle');
+    if (titleEl && titleEl.value.trim()) prog.title = titleEl.value.trim();
+
+    const catEl = document.getElementById('editProgCategory');
+    if (catEl && catEl.value) prog.category = catEl.value;
+
+    const descEl = document.getElementById('editProgDesc');
+    if (descEl) prog.desc = descEl.value.trim();
 
     prog.originalPrice = origNum > 0 ? `₩${origNum.toLocaleString()}` : rawOrigStr;
     prog.price = finalNum > 0 ? `₩${finalNum.toLocaleString()}` : rawPriceStr;
@@ -5228,7 +5237,7 @@ window.loadPopup = function () {
         statusBadge = `<span class="badge" style="font-size: 11px; padding: 2px 6px; background:#fee2e2; color:#991b1b;">기간만료</span>`;
       }
 
-      const priorityBadge = isActive 
+      const priorityBadge = isActive
         ? `<span class="badge" style="background:#e0f2fe; color:#0369a1; font-weight:700; font-size:12px; padding:3px 8px; border-radius:12px;">${p.priority}순위</span>`
         : `<span style="color:var(--admin-text-tertiary); font-size:12px;">-</span>`;
 
@@ -5521,7 +5530,7 @@ window.confirmPopupDelete = function (index) {
 window.selectPopupPreviewByIndex = function (originalIndex) {
   window.selectedPopupIndex = originalIndex;
   renderPopupPreview(originalIndex);
-  
+
   document.querySelectorAll('#popupList tr').forEach(tr => {
     if (parseInt(tr.dataset.index, 10) === originalIndex) {
       tr.style.background = 'var(--admin-accent-light)';
@@ -5558,7 +5567,7 @@ function renderPopupPreview(index) {
   const searchVal = document.getElementById('searchPopupTitle')?.value.toLowerCase().trim() || '';
   const statusVal = document.getElementById('filterPopupStatus')?.value || 'all';
   let filteredList = adminData.popup.map((item, idx) => ({ ...item, originalIndex: idx }));
-  
+
   if (searchVal) {
     filteredList = filteredList.filter(item => item.title.toLowerCase().includes(searchVal) || (item.desc || '').toLowerCase().includes(searchVal));
   }
@@ -5773,11 +5782,11 @@ function renderPopupEditForm(index) {
   const dropZone = document.getElementById('popupImageDropZone');
   const fileInput = document.getElementById('editPopupFileInput');
   if (dropZone && fileInput) {
-    dropZone.onclick = function(e) {
+    dropZone.onclick = function (e) {
       if (e.target === fileInput || e.target.closest('button')) return;
       fileInput.click();
     };
-    fileInput.onchange = async function() {
+    fileInput.onchange = async function () {
       if (fileInput.files.length > 0) {
         await uploadPopupImageFile(fileInput.files[0]);
       }

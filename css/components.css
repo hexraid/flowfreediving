@@ -289,7 +289,12 @@
   color: var(--text-secondary);
   line-height: var(--lh-relaxed);
   margin-bottom: 14px;
-  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: keep-all;
 }
 
 .program-card__meta {
