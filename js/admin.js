@@ -4472,10 +4472,43 @@ window.saveActiveEditForm = async function (panelName, index) {
       createdAt: new Date().toISOString().slice(0, 16).replace('T', ' ')
     } : adminData.popup[index];
 
+    const linkType = document.getElementById('editPopupLinkType')?.value || 'none';
+    const linkTarget = document.getElementById('editPopupProgramTarget')?.value || '';
+    const linkUrl = document.getElementById('editPopupLinkUrl')?.value.trim() || '';
+    const openInNewTab = document.getElementById('editPopupOpenInNewTab')?.checked || false;
+
+    if (linkType === 'external' && !linkUrl) {
+      alert('외부 URL을 입력해주세요.');
+      return;
+    }
+    if (linkType === 'program_detail' && !linkTarget) {
+      alert('교육과정을 선택해주세요.');
+      return;
+    }
+
     p.title = titleVal;
     p.desc = document.getElementById('editPopupDesc').value.trim();
-    p.link = document.getElementById('editPopupLink').value.trim();
-    p.openInNewTab = document.getElementById('editPopupOpenInNewTab').checked;
+    p.linkType = linkType;
+    p.linkTarget = linkTarget;
+    p.linkUrl = linkUrl;
+    p.openInNewTab = openInNewTab;
+
+    if (linkType === 'none') {
+      p.link = '';
+    } else if (linkType === 'main') {
+      p.link = '#';
+    } else if (linkType === 'programs') {
+      p.link = '#program';
+    } else if (linkType === 'program_detail') {
+      p.link = '#program-' + linkTarget;
+    } else if (linkType === 'gallery') {
+      p.link = 'gallery.html';
+    } else if (linkType === 'faq') {
+      p.link = '#faq';
+    } else if (linkType === 'external') {
+      p.link = linkUrl;
+    }
+
     p.image = imgVal;
     p.startDate = startVal;
     p.endDate = endVal;
@@ -5659,12 +5692,49 @@ function renderPopupEditForm(index) {
   const activeCount = adminData.popup ? adminData.popup.filter(item => getPopupStatus(item) === 'active').length : 0;
   const p = isNew ? {
     id: 'popup-' + Date.now(),
-    title: '', desc: '', link: '', image: '', openInNewTab: false,
+    title: '', desc: '', link: '', linkType: 'none', linkTarget: '', linkUrl: '', image: '', openInNewTab: false,
     startDate: new Date().toISOString().slice(0, 10),
     endDate: new Date(Date.now() + 30 * 24 * 3600 * 1000).toISOString().slice(0, 10),
     enabled: true, priority: activeCount + 1, target: 'all',
     useDismiss: true, dismissText: '오늘 하루 보지 않기'
   } : adminData.popup[index];
+
+  let linkType = p.linkType;
+  let linkTarget = p.linkTarget || '';
+  let linkUrl = p.linkUrl || '';
+
+  if (!linkType) {
+    const rawLink = String(p.link || '').trim();
+    if (rawLink.startsWith('#program-')) {
+      linkType = 'program_detail';
+      linkTarget = rawLink.replace('#program-', '');
+    } else if (rawLink === '#program') {
+      linkType = 'programs';
+    } else if (rawLink === '#faq') {
+      linkType = 'faq';
+    } else if (rawLink === 'gallery.html' || rawLink === '#gallery') {
+      linkType = 'gallery';
+    } else if (rawLink === '#' || rawLink === '#top') {
+      linkType = 'main';
+    } else if (rawLink !== '') {
+      linkType = 'external';
+      linkUrl = rawLink;
+    } else {
+      linkType = 'none';
+    }
+  }
+
+  let programsList = (adminData.programs && adminData.programs.length > 0)
+    ? adminData.programs.filter(prog => prog.visible !== false)
+    : (window.MOCK_DATA?.programs || []).filter(prog => prog.visible !== false);
+
+  const programOptionsHtml = programsList.length > 0
+    ? programsList.map(prog => {
+        const isSelected = linkTarget === prog.id ? 'selected' : '';
+        const subtitleText = prog.subtitle ? ` (${prog.subtitle})` : '';
+        return `<option value="${prog.id}" ${isSelected}>${prog.title}${subtitleText}</option>`;
+      }).join('')
+    : '<option value="">등록된 공개 교육과정이 없습니다</option>';
 
   formWrap.innerHTML = `
     <div class="popup-edit-grid">
@@ -5748,17 +5818,41 @@ function renderPopupEditForm(index) {
           </div>
         </div>
 
-        <!-- 4. 연결 링크 URL & 5. 새 창에서 링크 열기 -->
+        <!-- 4. 연결 링크 설정 -->
         <div class="form-group" style="border: 1px solid var(--admin-border); border-radius: var(--radius-md); padding: 10px 12px; background: var(--admin-bg); margin-bottom: 10px;">
-          <label class="form-label" style="margin-bottom: 4px;">연결 링크 URL (선택)</label>
-          <input type="text" class="form-input" id="editPopupLink" value="${p.link || ''}" placeholder="예: #program 또는 https://..." style="margin-bottom: 6px; min-height: 34px; font-size: 13.5px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; color: var(--admin-text-primary); font-weight: 500; margin: 0;">
-              <input type="checkbox" id="editPopupOpenInNewTab" ${p.openInNewTab ? 'checked' : ''}> 새 창에서 링크 열기
-            </label>
-            <span style="font-size: 11px; color: var(--admin-text-tertiary);">
-              (클릭 시 새 브라우저 탭에서 열림)
-            </span>
+          <label class="form-label" style="margin-bottom: 6px; font-weight: 700;">연결 링크 설정</label>
+
+          <div style="margin-bottom: 8px;">
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">링크 유형</label>
+            <select class="form-select" id="editPopupLinkType" onchange="window.handlePopupLinkTypeChange(this.value)" style="min-height: 36px; font-size: 13px; margin-bottom: 0;">
+              <option value="none" ${linkType === 'none' ? 'selected' : ''}>링크 없음</option>
+              <option value="main" ${linkType === 'main' ? 'selected' : ''}>홈페이지 메인</option>
+              <option value="programs" ${linkType === 'programs' ? 'selected' : ''}>교육과정 영역</option>
+              <option value="program_detail" ${linkType === 'program_detail' ? 'selected' : ''}>특정 교육과정</option>
+              <option value="gallery" ${linkType === 'gallery' ? 'selected' : ''}>갤러리</option>
+              <option value="faq" ${linkType === 'faq' ? 'selected' : ''}>FAQ</option>
+              <option value="external" ${linkType === 'external' ? 'selected' : ''}>외부 URL 직접 입력</option>
+            </select>
+          </div>
+
+          <div id="editPopupProgramWrap" style="display: ${linkType === 'program_detail' ? 'block' : 'none'}; margin-bottom: 8px;">
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">교육과정 선택 <span style="color:#EF4444;">*</span></label>
+            <select class="form-select" id="editPopupProgramTarget" style="min-height: 36px; font-size: 13px; margin-bottom: 0;">
+              ${programOptionsHtml}
+            </select>
+          </div>
+
+          <div id="editPopupExternalWrap" style="display: ${linkType === 'external' ? 'block' : 'none'};">
+            <label class="form-label" style="font-size: 12px; margin-bottom: 2px;">연결 링크 URL <span style="color:#EF4444;">*</span></label>
+            <input type="text" class="form-input" id="editPopupLinkUrl" value="${linkUrl}" placeholder="예: https://smartstore.naver.com/..." style="margin-bottom: 6px; min-height: 34px; font-size: 13.5px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; cursor: pointer; color: var(--admin-text-primary); font-weight: 500; margin: 0;">
+                <input type="checkbox" id="editPopupOpenInNewTab" ${p.openInNewTab ? 'checked' : ''}> 새 창에서 링크 열기
+              </label>
+              <span style="font-size: 11px; color: var(--admin-text-tertiary);">
+                (클릭 시 새 브라우저 탭에서 열림)
+              </span>
+            </div>
           </div>
         </div>
 
@@ -5790,6 +5884,13 @@ function renderPopupEditForm(index) {
   `;
 
   bindEditNavEvents();
+
+  window.handlePopupLinkTypeChange = function (type) {
+    const progWrap = document.getElementById('editPopupProgramWrap');
+    const extWrap = document.getElementById('editPopupExternalWrap');
+    if (progWrap) progWrap.style.display = (type === 'program_detail') ? 'block' : 'none';
+    if (extWrap) extWrap.style.display = (type === 'external') ? 'block' : 'none';
+  };
 
   const dropZone = document.getElementById('popupImageDropZone');
   const fileInput = document.getElementById('editPopupFileInput');

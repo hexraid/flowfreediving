@@ -276,6 +276,32 @@ export const MOCK_DATA = {
       prep: ['수영복, 세면도구', 'Level 1 자격증 사본', '개인 장비(있는 경우)']
     },
     {
+      id: 'level1-2',
+      visible: true,
+      category: 'freediving',
+      title: 'LEVEL 1+2',
+      subtitle: '입문 + 심화 패키지',
+      desc: '레벨 1과 레벨 2를 한 번에 할인된 금액으로 수강하는 특별 패키지 과정입니다.',
+      image: 'images/program-level2.jpg',
+      tags: ['패키지 할인', '4일', '자격증 2종'],
+      originalPrice: '₩1,050,000',
+      price: '₩850,000',
+      duration: '4일 (일정 선택 가능)',
+      groupSize: '최대 3인',
+      curriculum: [
+        'Level 1 입문 과정 (이론 + 풀장 10~20m)',
+        'Level 2 심화 과정 (고급 이퀄라이징 + 20~30m)',
+        '패키지 전용 밀착 멘토링 & 수중 촬영 포함'
+      ],
+      includes: [
+        '전 장비 대여',
+        'AIDA/SSI Level 1 & Level 2 자격증 발급',
+        '강사 소수 정예 밀착 교육',
+        '수영장 입장료 포함'
+      ],
+      prep: ['수영복, 세면도구', '가벼운 간식']
+    },
+    {
       id: 'level3',
       visible: true,
       category: 'freediving',
@@ -551,12 +577,14 @@ export const MOCK_DATA = {
   popup: [
     {
       id: 'popup-1',
-      title: '여름 프리다이빙 할인 이벤트',
-      desc: '여름 시즌 한정! 레벨 1 교육 10% 할인 혜택을 놓치지 마세요.',
+      title: '플로우 프리다이빙 할인 이벤트',
+      desc: '레벨1 + 레벨2 할인 이벤트중! 입문과 심화를 한 번에 수강하세요.',
       image: 'images/gallery-1.jpg',
-      link: 'https://flowfreediving.kr/programs/level1',
+      linkType: 'program_detail',
+      linkTarget: 'level1-2',
+      link: '#program-level1-2',
       startDate: '2026-07-01',
-      endDate: '2026-08-31',
+      endDate: '2026-12-31',
       enabled: true,
       priority: 1,
       target: 'all',

@@ -45,6 +45,7 @@ async function init() {
 
     state.links = links;
     state.galleryImages = gallery;
+    state.programs = programs;
 
     // Apply SEO & Header Nav Labels
     applySEO(seo);
@@ -61,7 +62,7 @@ async function init() {
     renderFAQ(faq);
     renderCTA(cta);
     renderFooter(footer);
-    renderPopup(popups);
+    renderPopup(popups, programs);
 
     // Init interactions
     initHeader();
@@ -1289,7 +1290,7 @@ function initFloatingCTA() {
 }
 
 // ─── Popup Overlay ───
-function renderPopup(popups) {
+function renderPopup(popups, loadedPrograms) {
   const overlay = document.getElementById('popupOverlay');
   if (!overlay || !popups) return;
 
@@ -1381,25 +1382,54 @@ function renderPopup(popups) {
   }
 
   // 모든 슬라이드를 겹쳐진 Grid Stack 구조로 1회 렌더링
-  const slidesHTML = activePopups.map((p, idx) => `
-    <div class="popup-slide ${idx === 0 ? 'is-active' : ''}" data-index="${idx}">
-      ${p.image ? `
-        <div class="popup-card__image-wrap">
-          <img class="popup-card__image" src="${p.image}" alt="${p.title}" onerror="this.src='images/gallery-1.jpg'">
-          <div class="popup-card__image-overlay"></div>
-        </div>
-      ` : ''}
-      <div class="popup-card__body">
-        <h3 class="popup-card__title">${p.title}</h3>
-        ${p.desc ? `<p class="popup-card__desc">${p.desc}</p>` : ''}
-        ${p.link ? `
-          <a href="${p.link}" class="popup-card__link-btn" ${p.openInNewTab ? 'target="_blank" rel="noopener noreferrer"' : 'target="_self"'}>
-            자세히 보기
-          </a>
+  const slidesHTML = activePopups.map((p, idx) => {
+    let linkType = p.linkType;
+    let linkTarget = p.linkTarget || '';
+    let linkUrl = p.linkUrl || p.link || '';
+
+    if (!linkType) {
+      const rawLink = String(p.link || '').trim();
+      if (rawLink.startsWith('#program-')) {
+        linkType = 'program_detail';
+        linkTarget = rawLink.replace('#program-', '');
+      } else if (rawLink === '#program') {
+        linkType = 'programs';
+      } else if (rawLink === '#faq') {
+        linkType = 'faq';
+      } else if (rawLink === 'gallery.html' || rawLink === '#gallery') {
+        linkType = 'gallery';
+      } else if (rawLink === '#' || rawLink === '#top') {
+        linkType = 'main';
+      } else if (rawLink !== '') {
+        linkType = 'external';
+        linkUrl = rawLink;
+      } else {
+        linkType = 'none';
+      }
+    }
+
+    const hasAction = linkType !== 'none';
+
+    return `
+      <div class="popup-slide ${idx === 0 ? 'is-active' : ''}" data-index="${idx}" ${hasAction ? 'style="cursor: pointer;"' : ''}>
+        ${p.image ? `
+          <div class="popup-card__image-wrap">
+            <img class="popup-card__image" src="${p.image}" alt="${p.title}" onerror="this.src='images/gallery-1.jpg'">
+            <div class="popup-card__image-overlay"></div>
+          </div>
         ` : ''}
+        <div class="popup-card__body">
+          <h3 class="popup-card__title">${p.title}</h3>
+          ${p.desc ? `<p class="popup-card__desc">${p.desc}</p>` : ''}
+          ${hasAction ? `
+            <button type="button" class="popup-card__link-btn">
+              자세히 보기
+            </button>
+          ` : ''}
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   const firstP = activePopups[0];
 
@@ -1460,6 +1490,101 @@ function renderPopup(popups) {
     if (isTransitioning) return;
     goToPopup((currentIndex + 1) % total);
     startAutoSlide();
+  });
+
+  // Popup slide action click handler
+  overlay.querySelectorAll('.popup-slide').forEach(slideEl => {
+    const idx = parseInt(slideEl.dataset.index, 10);
+    const p = activePopups[idx];
+    if (!p) return;
+
+    let linkType = p.linkType;
+    let linkTarget = p.linkTarget || '';
+    let linkUrl = p.linkUrl || p.link || '';
+
+    if (!linkType) {
+      const rawLink = String(p.link || '').trim();
+      if (rawLink.startsWith('#program-')) {
+        linkType = 'program_detail';
+        linkTarget = rawLink.replace('#program-', '');
+      } else if (rawLink === '#program') {
+        linkType = 'programs';
+      } else if (rawLink === '#faq') {
+        linkType = 'faq';
+      } else if (rawLink === 'gallery.html' || rawLink === '#gallery') {
+        linkType = 'gallery';
+      } else if (rawLink === '#' || rawLink === '#top') {
+        linkType = 'main';
+      } else if (rawLink !== '') {
+        linkType = 'external';
+        linkUrl = rawLink;
+      } else {
+        linkType = 'none';
+      }
+    }
+
+    if (linkType === 'none') return;
+
+    slideEl.addEventListener('click', (e) => {
+      if (e.target.closest('#popupCloseBtn, .popup-card__nav-btn, .popup-card__footer')) return;
+
+      e.preventDefault();
+      closePopup();
+
+      if (linkType === 'main') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (linkType === 'programs') {
+        const targetEl = document.getElementById('program');
+        if (targetEl) {
+          const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+          const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        }
+      } else if (linkType === 'program_detail') {
+        const targetEl = document.getElementById('program');
+        if (targetEl) {
+          const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+          const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        }
+        
+        const progList = (loadedPrograms && loadedPrograms.length > 0) ? loadedPrograms : (state.programs || []);
+        const targetId = String(linkTarget || '').trim();
+        const prog = progList.find(pr => String(pr.id) === targetId);
+
+        console.log('[Popup Click Debug Info]', {
+          linkType,
+          linkTarget: targetId,
+          availableProgramIds: progList.map(pr => pr.id),
+          foundProgram: prog
+        });
+
+        if (prog) {
+          setTimeout(() => {
+            openProgramModal(prog);
+          }, 300);
+        } else {
+          console.warn(`[Popup Click Warning] Target program ID "${targetId}" was not found in loaded programs:`, progList.map(pr => pr.id));
+        }
+      } else if (linkType === 'gallery') {
+        window.location.href = 'gallery.html';
+      } else if (linkType === 'faq') {
+        const targetEl = document.getElementById('faq');
+        if (targetEl) {
+          const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+          const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+          window.scrollTo({ top: Math.max(0, targetTop), behavior: 'smooth' });
+        }
+      } else if (linkType === 'external') {
+        if (linkUrl && linkUrl !== '#') {
+          if (p.openInNewTab) {
+            window.open(linkUrl, '_blank', 'noopener,noreferrer');
+          } else {
+            window.location.href = linkUrl;
+          }
+        }
+      }
+    });
   });
 
   // Hover pause / resume

@@ -278,6 +278,25 @@
     justify-content: center;
   }
 
+  /* Course Finder Restart Button Mobile */
+  .finder-restart {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    white-space: nowrap !important;
+    word-break: keep-all !important;
+    width: auto !important;
+    max-width: 100% !important;
+    padding: 6px 14px !important;
+    font-size: 13px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+  }
+
+  .finder-restart svg {
+    flex-shrink: 0 !important;
+  }
+
   /* Modal */
   .modal {
     padding: var(--space-6);
