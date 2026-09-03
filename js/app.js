@@ -122,6 +122,9 @@ function initHeader() {
     drawer?.classList.add('is-active');
     overlay?.classList.add('is-active');
     document.body.classList.add('no-scroll');
+    if (history.pushState) {
+      history.pushState({ flowState: 'mobileMenu' }, '');
+    }
   }
 
   function closeMobileMenu() {
@@ -193,8 +196,8 @@ function initHeader() {
               behavior: 'smooth'
             });
 
-            if (history.replaceState) {
-              history.replaceState(null, '', href);
+            if (history.pushState && window.location.hash !== href) {
+              history.pushState({ flowState: 'section', hash: href }, '', href);
             }
 
             setTimeout(() => {
@@ -620,6 +623,9 @@ function openProgramModal(prog) {
 
   overlay.classList.add('is-active');
   document.body.classList.add('no-scroll');
+  if (history.pushState) {
+    history.pushState({ flowState: 'modal', modalId: 'programModal' }, '');
+  }
 
   // Close
   const closeModal = () => {
@@ -895,6 +901,9 @@ function openLightbox(index) {
   updateLightbox();
   lightbox.classList.add('is-active');
   document.body.classList.add('no-scroll');
+  if (history.pushState) {
+    history.pushState({ flowState: 'modal', modalId: 'lightbox' }, '');
+  }
 
   // Close
   const closeLightbox = () => {
@@ -1480,6 +1489,74 @@ function renderPopup(popups) {
     startAutoSlide();
   }
 }
+
+// ─── Mobile Back Button & History Priority Handler ───
+window.addEventListener('popstate', () => {
+  // 1. Priority 1: Modals & Lightbox
+  const programOverlay = document.getElementById('programModalOverlay');
+  const lightbox = document.getElementById('lightbox');
+  const popupOverlay = document.getElementById('popupOverlay');
+
+  let modalClosed = false;
+
+  if (programOverlay?.classList.contains('is-active')) {
+    programOverlay.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+    modalClosed = true;
+  }
+  if (lightbox?.classList.contains('is-active')) {
+    const video = lightbox.querySelector('.lightbox__video');
+    if (video) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.style.display = 'none';
+    }
+    const img = lightbox.querySelector('.lightbox__img');
+    if (img) {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    lightbox.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+    modalClosed = true;
+  }
+  if (popupOverlay?.classList.contains('is-active')) {
+    popupOverlay.classList.remove('is-active');
+    modalClosed = true;
+  }
+
+  if (modalClosed) return;
+
+  // 2. Priority 2: Mobile Menu Drawer
+  if (state.mobileOpen) {
+    const toggle = document.getElementById('headerToggle');
+    const drawer = document.getElementById('mobileDrawer');
+    const overlay = document.getElementById('mobileOverlay');
+    state.mobileOpen = false;
+    toggle?.classList.remove('is-active');
+    drawer?.classList.remove('is-active');
+    overlay?.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+    return;
+  }
+
+  // 3. Priority 3: Internal Section / Category State
+  if (window.location.hash && window.location.hash !== '#') {
+    const targetEl = document.querySelector(window.location.hash);
+    if (targetEl) {
+      const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 72;
+      const targetTop = targetEl.getBoundingClientRect().top + window.pageYOffset - headerHeight;
+      window.scrollTo({
+        top: Math.max(0, targetTop),
+        behavior: 'smooth'
+      });
+      return;
+    }
+  } else {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+});
 
 // ─── Start App ───
 document.addEventListener('DOMContentLoaded', init);

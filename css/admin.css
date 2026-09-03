@@ -55,6 +55,12 @@ p {
   color: var(--admin-text-secondary) !important;
 }
 
+/* Mobile-only elements hidden on desktop */
+.admin-mobile-header,
+.admin-sidebar-overlay {
+  display: none;
+}
+
 /* Layout Framework */
 .admin-layout {
   display: flex;
@@ -3879,4 +3885,52 @@ tr.popup-drag-row.drag-over-bottom td {
   font-size: 13px;
   font-weight: 900;
   line-height: 1;
+}
+
+/* ═══════════════════════════════════════════════
+   Mobile Responsive Category & Filter Styles
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  #galleryCategoryFilterGroup {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding: 4px 6px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    display: inline-flex !important;
+  }
+  #galleryCategoryFilterGroup::-webkit-scrollbar {
+    display: none;
+  }
+  .gallery-cat-filter-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  #galleryCategoryManagerContainer {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .category-card-row {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+  .category-card-row input[type="text"] {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+  .filter-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+  .filter-bar form,
+  .filter-bar select,
+  .filter-bar button {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin-left: 0 !important;
+  }
 }

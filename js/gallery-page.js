@@ -132,6 +132,9 @@ function initHeader() {
     drawer?.classList.add('is-active');
     overlay?.classList.add('is-active');
     document.body.classList.add('no-scroll');
+    if (history.pushState) {
+      history.pushState({ flowState: 'mobileMenu' }, '');
+    }
   }
 
   function closeMobileMenu() {
@@ -382,6 +385,9 @@ function openLightbox(index) {
   updateLightbox();
   lightbox.classList.add('is-active');
   document.body.classList.add('no-scroll');
+  if (history.pushState) {
+    history.pushState({ flowState: 'modal', modalId: 'lightbox' }, '');
+  }
 
   const closeLightbox = () => {
     // 닫을 때 비디오 즉시 중지 및 리셋
@@ -642,6 +648,40 @@ function initFloatingCTA() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 }
+
+// ─── Mobile Back Button & History Priority Handler (Gallery Page) ───
+window.addEventListener('popstate', () => {
+  const lightbox = document.getElementById('lightbox');
+  if (lightbox?.classList.contains('is-active')) {
+    const video = lightbox.querySelector('.lightbox__video');
+    if (video) {
+      video.pause();
+      video.removeAttribute('src');
+      video.load();
+      video.style.display = 'none';
+    }
+    const img = lightbox.querySelector('.lightbox__img');
+    if (img) {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+    lightbox.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+    return;
+  }
+
+  if (state.mobileOpen) {
+    const toggle = document.getElementById('headerToggle');
+    const drawer = document.getElementById('mobileDrawer');
+    const overlay = document.getElementById('mobileOverlay');
+    state.mobileOpen = false;
+    toggle?.classList.remove('is-active');
+    drawer?.classList.remove('is-active');
+    overlay?.classList.remove('is-active');
+    document.body.classList.remove('no-scroll');
+    return;
+  }
+});
 
 // ─── DOMContentLoaded / Ready State 실행 ───
 if (document.readyState === 'loading') {

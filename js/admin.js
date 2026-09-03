@@ -430,8 +430,14 @@ function initMobileDrawer() {
   const overlay = document.getElementById('sidebarOverlay');
 
   if (!toggleBtn || !sidebar || !overlay) return;
+  if (toggleBtn.dataset.bound === 'true') return;
+  toggleBtn.dataset.bound = 'true';
 
-  function toggleDrawer() {
+  function toggleDrawer(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     toggleBtn.classList.toggle('is-active');
     sidebar.classList.toggle('is-open');
     overlay.classList.toggle('is-visible');
@@ -449,6 +455,12 @@ function initMobileDrawer() {
   document.querySelectorAll('.admin-nav-item').forEach(item => {
     item.addEventListener('click', closeDrawer);
   });
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMobileDrawer);
+} else {
+  initMobileDrawer();
 }
 
 // ─── CMS Reset Safety Confirm ───

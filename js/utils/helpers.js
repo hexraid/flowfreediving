@@ -24,7 +24,13 @@ export function initLinkHandler(links) {
       if (url.startsWith('tel:')) {
         window.location.href = url;
       } else {
-        window.open(url, '_blank', 'noopener,noreferrer');
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+        if (isMobile) {
+          // On mobile, use location.href to preserve history entry so pressing back returns to FLOW home
+          window.location.href = url;
+        } else {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }
       }
     }
   });
