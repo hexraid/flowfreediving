@@ -516,7 +516,6 @@ function renderPrograms(programs) {
               ${prog.tags.map(tag => `<span class="program-card__tag">${tag}</span>`).join('')}
             </div>
             <h3 class="program-card__title">${prog.title}</h3>
-            <p class="program-card__subtitle">${prog.subtitle}</p>
             <p class="program-card__desc">${prog.desc}</p>
           </div>
         </div>
@@ -573,7 +572,7 @@ function openProgramModal(prog) {
   modal.innerHTML = `
     <button class="modal__close" id="modalClose">${getIcon('x')}</button>
     <h2 class="modal__title">${prog.title}</h2>
-    <p class="modal__subtitle">${prog.subtitle ? `${prog.subtitle} — ` : ''}${prog.desc || ''}</p>
+    <p class="modal__subtitle">${prog.desc || ''}</p>
 
     <div class="modal__meta-grid" style="grid-template-columns: 1fr;">
       <div class="modal__meta-item" style="text-align: center;">
